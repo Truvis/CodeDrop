@@ -1,0 +1,12 @@
+Youtube has a way of creating dynamic ad urls. This script was coded to run as a cron and find the latest used and block them to provide temporaly ad blocking tillt he url changes.
+
+#!/bin/sh
+BL=/var/www/html/bl.txt
+mv $BL $BL.bak || echo "unable to move $BL to $BL.bak"
+cat /var/log/pihole.log | grep -o ".*\.googlevideo\.com" | cut -d" " -f6 | sort -t r -k 2 -n | uniq > $BL
+cat $BL $BL.bak | sort -t r -k 2 -n | uniq > $BL.temp
+rm -rf $BL
+mv $BL.temp $BL
+chown pihole:pihole $BL
+pihole -g
+systemctl restart pihole-FTL
