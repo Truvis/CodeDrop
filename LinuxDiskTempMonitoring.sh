@@ -24,33 +24,30 @@ fi
 get_color() {
     local temp=$1
     
-    # Red: 45-65°C
+    # Red: 45°C and above
     if [ "$temp" -ge 45 ]; then
         echo -e "\033[38;5;196m"  # Red
-    # Green/Yellow/Orange/Red gradient: 30-44°C
+    # Dark orange: 42-44°C
+    elif [ "$temp" -ge 42 ]; then
+        echo -e "\033[38;5;208m"  # Dark orange
+    # Orange: 40-41°C
+    elif [ "$temp" -ge 40 ]; then
+        echo -e "\033[38;5;214m"  # Orange
+    # Yellow: 35-39°C
+    elif [ "$temp" -ge 35 ]; then
+        echo -e "\033[38;5;226m"  # Yellow
+    # Green: 30-34°C (optimal)
     elif [ "$temp" -ge 30 ]; then
-        local range=14  # 44 - 30
-        local position=$((temp - 30))
-        local color_index=$((position * 4 / range))
-        case $color_index in
-            0) echo -e "\033[38;5;46m" ;;   # Green
-            1) echo -e "\033[38;5;226m" ;;  # Yellow
-            2) echo -e "\033[38;5;214m" ;;  # Orange
-            *) echo -e "\033[38;5;208m" ;;  # Dark orange
-        esac
-    # Purple to Light Blue/Green: 5-29°C
+        echo -e "\033[38;5;46m"  # Green
+    # Light green: 22-29°C
+    elif [ "$temp" -ge 22 ]; then
+        echo -e "\033[38;5;86m"  # Light green
+    # Light blue: 15-21°C
+    elif [ "$temp" -ge 15 ]; then
+        echo -e "\033[38;5;51m"  # Light blue
+    # Purple: below 15°C (cold)
     else
-        if [ "$temp" -lt 5 ]; then
-            temp=5
-        fi
-        local range=24  # 29 - 5
-        local position=$((temp - 5))
-        local color_index=$((position * 3 / range))
-        case $color_index in
-            0) echo -e "\033[38;5;93m" ;;   # Purple
-            1) echo -e "\033[38;5;51m" ;;   # Light blue
-            *) echo -e "\033[38;5;86m" ;;   # Light green
-        esac
+        echo -e "\033[38;5;93m"  # Purple
     fi
 }
 
@@ -134,14 +131,13 @@ while true; do
     PADDING=$(printf ' %.0s' $(seq 1 $PAD_LEN))
     echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${PURPLE_BG} ${BOLD}${YELLOW}${TITLE}${PADDING} ${RESET}${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}"
     
-    # Temperature scale line
-    # "Temperature Scale: " (19) + "5°C/41°F" (9) + 8 blocks + "65°C/149°F" (11) = 47 visual chars + 4 for borders and spaces
-    SCALE_TEXT="Temperature Scale: 5°C/41°F████████65°C/149°F"
-    SCALE_LEN=${#SCALE_TEXT}
+    # Temperature scale line with ranges in colors (green at 30°C, red starts at 45°C, goes to 65°C)
+    # Count: "Temp Scale: 5°C/41°F " (22) + 8 blocks of " XX " (32) + " 65°C/149°F" (11) = 65 visible chars
+    SCALE_LEN=63
     SCALE_PAD=$((TERM_WIDTH - SCALE_LEN - 4))
     if [ $SCALE_PAD -lt 0 ]; then SCALE_PAD=0; fi
     SCALE_PADDING=$(printf ' %.0s' $(seq 1 $SCALE_PAD))
-    echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${PURPLE_BG} ${BOLD}${WHITE}Temperature Scale: ${BOLD}\033[38;5;93m5°C/41°F${RESET}${PURPLE_BG}\033[38;5;93m█\033[38;5;51m█\033[38;5;86m█\033[38;5;46m█\033[38;5;226m█\033[38;5;214m█\033[38;5;208m█\033[38;5;196m█${RESET}${PURPLE_BG}${BOLD}\033[38;5;196m65°C/149°F${RESET}${PURPLE_BG}${SCALE_PADDING} ${RESET}${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}"
+    echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${PURPLE_BG} ${BOLD}${WHITE}Temp Scale: 5°C/41°F ${RESET}${PURPLE_BG}\033[48;5;93m\033[38;5;231m 5 \033[0m${PURPLE_BG}\033[48;5;51m\033[38;5;16m 15 \033[0m${PURPLE_BG}\033[48;5;86m\033[38;5;16m 22 \033[0m${PURPLE_BG}\033[48;5;46m\033[38;5;16m 30 \033[0m${PURPLE_BG}\033[48;5;226m\033[38;5;16m 35 \033[0m${PURPLE_BG}\033[48;5;214m\033[38;5;16m 40 \033[0m${PURPLE_BG}\033[48;5;208m\033[38;5;16m 42 \033[0m${PURPLE_BG}\033[48;5;196m\033[38;5;231m 45 \033[0m${RESET}${PURPLE_BG} ${BOLD}${WHITE}65°C/149°F${RESET}${PURPLE_BG}${SCALE_PADDING} ${RESET}${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}"
     
     # Refresh info line
     REFRESH_TEXT="Refreshing every ${REFRESH_INTERVAL}s - Press Ctrl+C to exit"
@@ -195,14 +191,17 @@ while true; do
         IP_ADDRESS="No IP"
     fi
     
-    # Hostname and IP bar
+    # Hostname section border (top)
+    echo -e "${YELLOW_BG}${BLACK}╔${BORDER_LINE}╗${RESET}"
+    
+    # Hostname and IP bar with borders
     HOST_INFO="${HOSTNAME} • ${IP_ADDRESS}"
     HOST_LEN=$((${#HOSTNAME} + ${#IP_ADDRESS} + 3))  # Account for symbols and spaces
-    HOST_PAD=$((TERM_WIDTH - HOST_LEN))
+    HOST_PAD=$((TERM_WIDTH - HOST_LEN - 4))  # Account for borders and spaces
     if [ $HOST_PAD -lt 0 ]; then 
         HOST_PAD=0
         # Truncate hostname if too long
-        MAX_HOST_LEN=$((TERM_WIDTH - ${#IP_ADDRESS} - 10))
+        MAX_HOST_LEN=$((TERM_WIDTH - ${#IP_ADDRESS} - 14))
         if [ $MAX_HOST_LEN -gt 0 ]; then
             HOSTNAME="${HOSTNAME:0:$MAX_HOST_LEN}"
             HOST_INFO="${HOSTNAME} • ${IP_ADDRESS}"
@@ -210,10 +209,13 @@ while true; do
         fi
     fi
     HOST_PADDING=$(printf ' %.0s' $(seq 1 $HOST_PAD))
-    echo -e "${YELLOW_BG}${BLACK}${HOST_INFO}${HOST_PADDING}${RESET}"
+    echo -e "${YELLOW_BG}${BLACK}║${RESET}${YELLOW_BG}${BLACK} ${HOST_INFO}${HOST_PADDING} ${RESET}${YELLOW_BG}${BLACK}║${RESET}"
     
-    # Drive monitoring section border (top)
-    echo -e "${DARKBLUE_BG}${BOLD}${LIGHTBLUE}╔${BORDER_LINE}╗${RESET}"
+    # Drive monitoring section border (top with T-connection)
+    echo -e "${YELLOW_BG}${BLACK}╠${BORDER_LINE}╣${RESET}"
+    
+    # Dark blue T-border line
+    echo -e "${DARKBLUE_BG}${BOLD}${LIGHTBLUE}╠${BORDER_LINE}╣${RESET}"
     
     # Get all block devices (excluding loop, ram, etc.)
     drives=$(lsblk -ndo NAME,TYPE | grep disk | awk '{print $1}')
@@ -268,10 +270,10 @@ while true; do
         fi
         
         # Calculate available space for model based on terminal width
-        # Format: [ drive ] |bar| [ temp ] [ serial ] [ model ] ║
-        # Fixed widths: drive=10, bar=27, temp=16 (with F), serial=16, brackets/spaces=14, right border=2
-        # Total fixed = 87, so model space = TERM_WIDTH - 87
-        AVAILABLE_MODEL_WIDTH=$((TERM_WIDTH - 87))
+        # Format: ║ [ drive ] |bar| [ temp ] [ serial ] [ model ] ║
+        # Left border: 2, drive bracket+spaces: 12, bar pipes+spaces: 29, temp bracket+spaces: 18, serial bracket+spaces: 16, model brackets: 4, right border: 2
+        # Total fixed = 84, so model space = TERM_WIDTH - 84
+        AVAILABLE_MODEL_WIDTH=$((TERM_WIDTH - 84))
         if [ $AVAILABLE_MODEL_WIDTH -lt 20 ]; then
             AVAILABLE_MODEL_WIDTH=20
         fi
@@ -282,21 +284,14 @@ while true; do
             color=$(get_color "$temp")
             bar=$(create_bar "$temp")
             
-            # Calculate padding for model to fill terminal width
-            MODEL_PAD=$((AVAILABLE_MODEL_WIDTH - ${#model_display}))
-            MODEL_PADDING=$(printf ' %.0s' $(seq 1 $MODEL_PAD))
-            
-            printf "${DARKBLUE_BG}${LIGHTBLUE}║${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${WHITE}%-8s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} |%s${DARKBLUE_BG}| ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${color}%3s°C / %3s°F${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${WHITE}%-12s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${WHITE}%s${MODEL_PADDING}${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}║${RESET}\n" \
+            # Build the line and calculate exact padding needed
+            printf "${DARKBLUE_BG}${LIGHTBLUE}║${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${WHITE}%-8s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} |%s${DARKBLUE_BG}| ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${color}%3s°C / %3s°F${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${WHITE}%-12s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${WHITE}%-${AVAILABLE_MODEL_WIDTH}s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}║${RESET}\n" \
                 "$drive" "$bar" "$temp" "$temp_f" "$serial" "$model_display"
         else
-            # Calculate padding for model to fill terminal width
-            MODEL_PAD=$((AVAILABLE_MODEL_WIDTH - ${#model_display}))
-            MODEL_PADDING=$(printf ' %.0s' $(seq 1 $MODEL_PAD))
+            # Create a centered "No temperature data" message in the bar area (25 chars to match bar length)
+            NO_TEMP_MSG="  No temperature data   "
             
-            # Create a centered "No temperature data" message in the bar area (25 chars)
-            NO_TEMP_MSG="  No temperature data  "
-            
-            printf "${DARKBLUE_BG}${LIGHTBLUE}║${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${WHITE}%-8s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} |${GRAY}%s${RESET}${DARKBLUE_BG}| ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${WHITE}%-14s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${WHITE}%-12s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${WHITE}%s${MODEL_PADDING}${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}║${RESET}\n" \
+            printf "${DARKBLUE_BG}${LIGHTBLUE}║${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${WHITE}%-8s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} |${GRAY}%s${RESET}${DARKBLUE_BG}| ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${WHITE}%-14s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${WHITE}%-12s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${WHITE}%-${AVAILABLE_MODEL_WIDTH}s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}║${RESET}\n" \
                 "$drive" "$NO_TEMP_MSG" "N/A" "$serial" "$model_display"
         fi
     done
