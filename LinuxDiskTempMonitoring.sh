@@ -125,59 +125,66 @@ while true; do
     # Print header box with full terminal width
     echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}╔${BORDER_LINE}╗${RESET}"
     
-    # Calculate padding for centered text
-    TITLE="🌡️  Drive Temperature Monitor 🌡️"
-    # Account for emoji taking up visual space (approximately 4 chars per emoji)
-    TITLE_LEN=37
-    PAD_LEN=$((TERM_WIDTH - TITLE_LEN - 2))
+    # Title line
+    TITLE="Drive Temperature Monitor - Version 1 [ Truvis Thornton - http://truv.is ]"
+    TITLE_LEN=${#TITLE}
+    # Account for the space after ║ and before ║ (2 spaces total) plus the two ║ chars (2)
+    PAD_LEN=$((TERM_WIDTH - TITLE_LEN - 4))
     if [ $PAD_LEN -lt 0 ]; then PAD_LEN=0; fi
     PADDING=$(printf ' %.0s' $(seq 1 $PAD_LEN))
-    echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${PURPLE_BG} ${BOLD}${YELLOW}${TITLE}${RESET}${PURPLE_BG}${PADDING}${BOLD}${LIGHTBLUE}║${RESET}"
+    echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${PURPLE_BG} ${BOLD}${YELLOW}${TITLE}${PADDING} ${RESET}${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}"
     
     # Temperature scale line
-    # "Temperature Scale: " (19) + "5°C" (3) + 8 bars + "65°C" (4) = ~34 visual chars
-    SCALE_LEN=36
-    SCALE_PAD=$((TERM_WIDTH - SCALE_LEN - 2))
+    # "Temperature Scale: " (19) + "5°C/41°F" (9) + 8 blocks + "65°C/149°F" (11) = 47 visual chars + 4 for borders and spaces
+    SCALE_TEXT="Temperature Scale: 5°C/41°F████████65°C/149°F"
+    SCALE_LEN=${#SCALE_TEXT}
+    SCALE_PAD=$((TERM_WIDTH - SCALE_LEN - 4))
     if [ $SCALE_PAD -lt 0 ]; then SCALE_PAD=0; fi
     SCALE_PADDING=$(printf ' %.0s' $(seq 1 $SCALE_PAD))
-    echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${PURPLE_BG} ${BOLD}${WHITE}Temperature Scale: ${BOLD}\033[38;5;93m5°C${RESET}${PURPLE_BG}\033[38;5;93m━\033[38;5;51m━\033[38;5;86m━\033[38;5;46m━\033[38;5;226m━\033[38;5;214m━\033[38;5;208m━\033[38;5;196m━${RESET}${PURPLE_BG}${BOLD}\033[38;5;196m65°C${RESET}${PURPLE_BG}${SCALE_PADDING}${BOLD}${LIGHTBLUE}║${RESET}"
+    echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${PURPLE_BG} ${BOLD}${WHITE}Temperature Scale: ${BOLD}\033[38;5;93m5°C/41°F${RESET}${PURPLE_BG}\033[38;5;93m█\033[38;5;51m█\033[38;5;86m█\033[38;5;46m█\033[38;5;226m█\033[38;5;214m█\033[38;5;208m█\033[38;5;196m█${RESET}${PURPLE_BG}${BOLD}\033[38;5;196m65°C/149°F${RESET}${PURPLE_BG}${SCALE_PADDING} ${RESET}${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}"
     
     # Refresh info line
     REFRESH_TEXT="Refreshing every ${REFRESH_INTERVAL}s - Press Ctrl+C to exit"
     REFRESH_LEN=${#REFRESH_TEXT}
-    REFRESH_PAD=$((TERM_WIDTH - REFRESH_LEN - 3))
+    REFRESH_PAD=$((TERM_WIDTH - REFRESH_LEN - 4))
+    if [ $REFRESH_PAD -lt 0 ]; then REFRESH_PAD=0; fi
     REFRESH_PADDING=$(printf ' %.0s' $(seq 1 $REFRESH_PAD))
-    echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${PURPLE_BG} ${WHITE}${REFRESH_TEXT}${RESET}${PURPLE_BG}${REFRESH_PADDING}${BOLD}${LIGHTBLUE}║${RESET}"
+    echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${PURPLE_BG} ${WHITE}${REFRESH_TEXT}${RESET}${PURPLE_BG}${REFRESH_PADDING} ${RESET}${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}"
     
     # Blank line
-    BLANK_PAD=$((TERM_WIDTH - 2))
+    BLANK_PAD=$((TERM_WIDTH - 4))
+    if [ $BLANK_PAD -lt 0 ]; then BLANK_PAD=0; fi
     BLANK_PADDING=$(printf ' %.0s' $(seq 1 $BLANK_PAD))
-    echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${PURPLE_BG}${BLANK_PADDING}${BOLD}${LIGHTBLUE}║${RESET}"
+    echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${PURPLE_BG} ${BLANK_PADDING} ${RESET}${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}"
     
     # Temperature range info
     INFO1="• Optimal: 30°C to 45°C (86°F to 113°F)"
     INFO1_LEN=${#INFO1}
-    INFO1_PAD=$((TERM_WIDTH - INFO1_LEN - 3))
+    INFO1_PAD=$((TERM_WIDTH - INFO1_LEN - 4))
+    if [ $INFO1_PAD -lt 0 ]; then INFO1_PAD=0; fi
     INFO1_PADDING=$(printf ' %.0s' $(seq 1 $INFO1_PAD))
-    echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${PURPLE_BG} ${WHITE}${INFO1}${RESET}${PURPLE_BG}${INFO1_PADDING}${BOLD}${LIGHTBLUE}║${RESET}"
+    echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${PURPLE_BG} ${WHITE}${INFO1}${RESET}${PURPLE_BG}${INFO1_PADDING} ${RESET}${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}"
     
     INFO2="• Acceptable (but concerning): 45°C to 55°C (113°F to 131°F)"
     INFO2_LEN=${#INFO2}
-    INFO2_PAD=$((TERM_WIDTH - INFO2_LEN - 3))
+    INFO2_PAD=$((TERM_WIDTH - INFO2_LEN - 4))
+    if [ $INFO2_PAD -lt 0 ]; then INFO2_PAD=0; fi
     INFO2_PADDING=$(printf ' %.0s' $(seq 1 $INFO2_PAD))
-    echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${PURPLE_BG} ${WHITE}${INFO2}${RESET}${PURPLE_BG}${INFO2_PADDING}${BOLD}${LIGHTBLUE}║${RESET}"
+    echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${PURPLE_BG} ${WHITE}${INFO2}${RESET}${PURPLE_BG}${INFO2_PADDING} ${RESET}${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}"
     
     INFO3="• Critical/Dangerous: Consistently above 55°C (131°F)"
     INFO3_LEN=${#INFO3}
-    INFO3_PAD=$((TERM_WIDTH - INFO3_LEN - 3))
+    INFO3_PAD=$((TERM_WIDTH - INFO3_LEN - 4))
+    if [ $INFO3_PAD -lt 0 ]; then INFO3_PAD=0; fi
     INFO3_PADDING=$(printf ' %.0s' $(seq 1 $INFO3_PAD))
-    echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${PURPLE_BG} ${WHITE}${INFO3}${RESET}${PURPLE_BG}${INFO3_PADDING}${BOLD}${LIGHTBLUE}║${RESET}"
+    echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${PURPLE_BG} ${WHITE}${INFO3}${RESET}${PURPLE_BG}${INFO3_PADDING} ${RESET}${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}"
     
     INFO4="• Cold Risk: Below 5°C (41°F)"
     INFO4_LEN=${#INFO4}
-    INFO4_PAD=$((TERM_WIDTH - INFO4_LEN - 3))
+    INFO4_PAD=$((TERM_WIDTH - INFO4_LEN - 4))
+    if [ $INFO4_PAD -lt 0 ]; then INFO4_PAD=0; fi
     INFO4_PADDING=$(printf ' %.0s' $(seq 1 $INFO4_PAD))
-    echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${PURPLE_BG} ${WHITE}${INFO4}${RESET}${PURPLE_BG}${INFO4_PADDING}${BOLD}${LIGHTBLUE}║${RESET}"
+    echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${PURPLE_BG} ${WHITE}${INFO4}${RESET}${PURPLE_BG}${INFO4_PADDING} ${RESET}${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}"
     
     echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}╚${BORDER_LINE}╝${RESET}"
     
@@ -189,10 +196,19 @@ while true; do
     fi
     
     # Hostname and IP bar
-    HOST_INFO="🖥️  ${HOSTNAME} • ${IP_ADDRESS}"
-    HOST_LEN=$((${#HOSTNAME} + ${#IP_ADDRESS} + 9))  # Account for emoji and symbols
+    HOST_INFO="${HOSTNAME} • ${IP_ADDRESS}"
+    HOST_LEN=$((${#HOSTNAME} + ${#IP_ADDRESS} + 3))  # Account for symbols and spaces
     HOST_PAD=$((TERM_WIDTH - HOST_LEN))
-    if [ $HOST_PAD -lt 0 ]; then HOST_PAD=0; fi
+    if [ $HOST_PAD -lt 0 ]; then 
+        HOST_PAD=0
+        # Truncate hostname if too long
+        MAX_HOST_LEN=$((TERM_WIDTH - ${#IP_ADDRESS} - 10))
+        if [ $MAX_HOST_LEN -gt 0 ]; then
+            HOSTNAME="${HOSTNAME:0:$MAX_HOST_LEN}"
+            HOST_INFO="${HOSTNAME} • ${IP_ADDRESS}"
+            HOST_PAD=1
+        fi
+    fi
     HOST_PADDING=$(printf ' %.0s' $(seq 1 $HOST_PAD))
     echo -e "${YELLOW_BG}${BLACK}${HOST_INFO}${HOST_PADDING}${RESET}"
     
@@ -252,10 +268,10 @@ while true; do
         fi
         
         # Calculate available space for model based on terminal width
-        # Format: [ drive ] |bar| [ temp ] [ serial ] [ model ]
-        # Fixed widths: drive=10, bar=27, temp=16 (with F), serial=16, brackets/spaces=14
-        # Total fixed = 83, so model space = TERM_WIDTH - 83
-        AVAILABLE_MODEL_WIDTH=$((TERM_WIDTH - 83))
+        # Format: [ drive ] |bar| [ temp ] [ serial ] [ model ] ║
+        # Fixed widths: drive=10, bar=27, temp=16 (with F), serial=16, brackets/spaces=14, right border=2
+        # Total fixed = 87, so model space = TERM_WIDTH - 87
+        AVAILABLE_MODEL_WIDTH=$((TERM_WIDTH - 87))
         if [ $AVAILABLE_MODEL_WIDTH -lt 20 ]; then
             AVAILABLE_MODEL_WIDTH=20
         fi
@@ -270,15 +286,18 @@ while true; do
             MODEL_PAD=$((AVAILABLE_MODEL_WIDTH - ${#model_display}))
             MODEL_PADDING=$(printf ' %.0s' $(seq 1 $MODEL_PAD))
             
-            printf "${DARKBLUE_BG}${LIGHTBLUE}║${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${WHITE}%-8s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} |%s${DARKBLUE_BG}| ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${color}%3s°C / %3s°F${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${WHITE}%-12s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${WHITE}%s${MODEL_PADDING}${RESET}${DARKBLUE_BG}${RESET}\n" \
+            printf "${DARKBLUE_BG}${LIGHTBLUE}║${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${WHITE}%-8s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} |%s${DARKBLUE_BG}| ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${color}%3s°C / %3s°F${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${WHITE}%-12s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${WHITE}%s${MODEL_PADDING}${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}║${RESET}\n" \
                 "$drive" "$bar" "$temp" "$temp_f" "$serial" "$model_display"
         else
             # Calculate padding for model to fill terminal width
             MODEL_PAD=$((AVAILABLE_MODEL_WIDTH - ${#model_display}))
             MODEL_PADDING=$(printf ' %.0s' $(seq 1 $MODEL_PAD))
             
-            printf "${DARKBLUE_BG}${LIGHTBLUE}║${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${WHITE}%-8s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} | ${GRAY}%-25s${RESET}${DARKBLUE_BG} | ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${WHITE}%-14s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${WHITE}%-12s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${WHITE}%s${MODEL_PADDING}${RESET}${DARKBLUE_BG}${RESET}\n" \
-                "$drive" "No temperature data" "N/A" "$serial" "$model_display"
+            # Create a centered "No temperature data" message in the bar area (25 chars)
+            NO_TEMP_MSG="  No temperature data  "
+            
+            printf "${DARKBLUE_BG}${LIGHTBLUE}║${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${WHITE}%-8s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} |${GRAY}%s${RESET}${DARKBLUE_BG}| ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${WHITE}%-14s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${WHITE}%-12s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${WHITE}%s${MODEL_PADDING}${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}║${RESET}\n" \
+                "$drive" "$NO_TEMP_MSG" "N/A" "$serial" "$model_display"
         fi
     done
     
