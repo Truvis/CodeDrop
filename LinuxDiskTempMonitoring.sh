@@ -217,11 +217,44 @@ while true; do
     # Dark blue T-border line
     echo -e "${DARKBLUE_BG}${BOLD}${LIGHTBLUE}╠${BORDER_LINE}╣${RESET}"
     
+    # Header row for columns
+    HEADER_DRIVE="DRIVE"
+    HEADER_GRAPH="TEMP GRAPH"
+    HEADER_TEMP="TEMPERATURE"
+    HEADER_SERIAL="SERIAL"
+    HEADER_MODEL="MODEL"
+    
+    # Calculate padding for centered "TEMP GRAPH" in the 25-char bar area
+    GRAPH_HEADER_LEN=${#HEADER_GRAPH}
+    GRAPH_PAD_LEFT=$(( (25 - GRAPH_HEADER_LEN) / 2 ))
+    GRAPH_PAD_RIGHT=$(( 25 - GRAPH_HEADER_LEN - GRAPH_PAD_LEFT ))
+    GRAPH_LEFT_PAD=$(printf ' %.0s' $(seq 1 $GRAPH_PAD_LEFT))
+    GRAPH_RIGHT_PAD=$(printf ' %.0s' $(seq 1 $GRAPH_PAD_RIGHT))
+    
+    # Available model width calculation (same as in drive display)
+    # Total fixed width calculation to align borders properly
+    AVAILABLE_MODEL_WIDTH=$((TERM_WIDTH - 85))
+    if [ $AVAILABLE_MODEL_WIDTH -lt 20 ]; then
+        AVAILABLE_MODEL_WIDTH=20
+    fi
+    
+    # Print header row with same structure as data rows
+    printf "${DARKBLUE_BG}${LIGHTBLUE}║${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-8s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${GRAY}|${RESET}${DARKBLUE_BG}%s${BOLD}${CYAN}%s${GRAY}%s${RESET}${DARKBLUE_BG}${GRAY}|${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-14s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-12s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-${AVAILABLE_MODEL_WIDTH}s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}║${RESET}\n" \
+        "$HEADER_DRIVE" "$GRAPH_LEFT_PAD" "$HEADER_GRAPH" "$GRAPH_RIGHT_PAD" "$HEADER_TEMP" "$HEADER_SERIAL" "$HEADER_MODEL"
+    
+    # Separator line with dashes
+    SEP_WIDTH=$((TERM_WIDTH - 4))
+    SEPARATOR=$(printf -- '-%.0s' $(seq 1 $SEP_WIDTH))
+    printf "${DARKBLUE_BG}${LIGHTBLUE}║${RESET}${DARKBLUE_BG} ${GRAY}${SEPARATOR}${RESET}${DARKBLUE_BG} ${LIGHTBLUE}║${RESET}\n"
+    
     # Get all block devices (excluding loop, ram, etc.)
     drives=$(lsblk -ndo NAME,TYPE | grep disk | awk '{print $1}')
     
     if [ -z "$drives" ]; then
-        echo "No drives found"
+        echo -e "${DARKBLUE_BG}${LIGHTBLUE}║${RESET}${DARKBLUE_BG} ${WHITE}No drives found${RESET}${DARKBLUE_BG}$(printf ' %.0s' $(seq 1 $((TERM_WIDTH - 20))))${LIGHTBLUE}║${RESET}"
+        # Drive monitoring section border (bottom)
+        echo -e "${DARKBLUE_BG}${BOLD}${LIGHTBLUE}╚${BORDER_LINE}╝${RESET}"
+        echo ""
         sleep $REFRESH_INTERVAL
         continue
     fi
@@ -270,10 +303,8 @@ while true; do
         fi
         
         # Calculate available space for model based on terminal width
-        # Format: ║ [ drive ] |bar| [ temp ] [ serial ] [ model ] ║
-        # Left border: 2, drive bracket+spaces: 12, bar pipes+spaces: 29, temp bracket+spaces: 18, serial bracket+spaces: 16, model brackets: 4, right border: 2
-        # Total fixed = 84, so model space = TERM_WIDTH - 84
-        AVAILABLE_MODEL_WIDTH=$((TERM_WIDTH - 84))
+        # Total fixed width calculation to align borders properly
+        AVAILABLE_MODEL_WIDTH=$((TERM_WIDTH - 85))
         if [ $AVAILABLE_MODEL_WIDTH -lt 20 ]; then
             AVAILABLE_MODEL_WIDTH=20
         fi
@@ -285,7 +316,7 @@ while true; do
             bar=$(create_bar "$temp")
             
             # Build the line and calculate exact padding needed
-            printf "${DARKBLUE_BG}${LIGHTBLUE}║${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${WHITE}%-8s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} |%s${DARKBLUE_BG}| ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${color}%3s°C / %3s°F${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${WHITE}%-12s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${WHITE}%-${AVAILABLE_MODEL_WIDTH}s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}║${RESET}\n" \
+            printf "${DARKBLUE_BG}${LIGHTBLUE}║${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${WHITE}%-8s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} |%s${DARKBLUE_BG}| ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${color}%3s°C / %3s°F  ${RESET}${DARKBLUE_BG}${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${WHITE}%-12s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${WHITE}%-${AVAILABLE_MODEL_WIDTH}s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}║${RESET}\n" \
                 "$drive" "$bar" "$temp" "$temp_f" "$serial" "$model_display"
         else
             # Create a centered "No temperature data" message in the bar area (25 chars to match bar length)
