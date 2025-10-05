@@ -253,16 +253,16 @@ while true; do
     echo -e "${YELLOW_BG}${BLACK}╔${BORDER_LINE}╗${RESET}"
 
     # Hostname and IP bar with borders
-    HOST_INFO="${HOSTNAME} • ${IP_ADDRESS}"
-    HOST_LEN=$((${#HOSTNAME} + ${#IP_ADDRESS} + 3))  # Account for symbols and spaces
-    HOST_PAD=$((TERM_WIDTH - HOST_LEN - 4))  # Account for borders and spaces
+    HOST_INFO="🖥️ ${HOSTNAME} • 🖧 ${IP_ADDRESS}"
+    HOST_LEN=$((${#HOSTNAME} + ${#IP_ADDRESS} + 11))  # Account for symbols, spaces, and emojis
+    HOST_PAD=$((TERM_WIDTH - HOST_LEN))  # Account for borders and spaces
     if [ $HOST_PAD -lt 0 ]; then
         HOST_PAD=0
         # Truncate hostname if too long
         MAX_HOST_LEN=$((TERM_WIDTH - ${#IP_ADDRESS} - 14))
         if [ $MAX_HOST_LEN -gt 0 ]; then
             HOSTNAME="${HOSTNAME:0:$MAX_HOST_LEN}"
-            HOST_INFO="${HOSTNAME} • ${IP_ADDRESS}"
+            HOST_INFO="🖥️ ${HOSTNAME} • 🖧 ${IP_ADDRESS}"
             HOST_PAD=1
         fi
     fi
