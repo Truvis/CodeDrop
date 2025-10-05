@@ -158,7 +158,7 @@ create_bar_with_temp() {
             # Light blue for 6-28°C
             block_color="\033[38;5;117m"
         fi
-        bar+="${block_color}█${RESET}"
+        bar+="${block_color}■${RESET}"
     else
         # Clamp max temperature
         if [ "$temp" -gt "$max_temp" ]; then
@@ -169,21 +169,21 @@ create_bar_with_temp() {
         filled=$((temp - min_temp + 1))
         
         # First block represents 28°C and below (light blue)
-        bar+="\033[38;5;117m█${RESET}"
+        bar+="\033[38;5;117m■${RESET}"
         
         # Add blocks for each degree above 28°C with gradient
         for ((i=1; i<filled; i++)); do
             local actual_temp=$((min_temp + i))
             local pos_color
             pos_color=$(get_color "$actual_temp")
-            bar+="${pos_color}█${RESET}"
+            bar+="${pos_color}■${RESET}"
         done
     fi
 
     # Add empty blocks for remaining degrees
     local empty=$((bar_length - filled))
     for ((i=0; i<empty; i++)); do
-        bar+="\033[48;5;232m\033[38;5;240m▓\033[0m"
+        bar+="\033[48;5;232m\033[38;5;240m■\033[0m"
     done
 
     # Get the color for the actual current temperature for the display
@@ -341,7 +341,7 @@ while true; do
     fi
 
     # Print header row with proper alignment and dark blue background (without background on borders)
-    printf "${LIGHTBLUE}║${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-8s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} %s${BOLD}${CYAN}%s${RESET}${DARKBLUE_BG}%s  ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-12s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-${AVAILABLE_MODEL_WIDTH}s${RESET}${DARKBLUE_BG}    ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${RESET}${LIGHTBLUE}║${RESET}\n" \
+    printf "${LIGHTBLUE}║${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-8s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} %s${BOLD}${CYAN}%s${RESET}${DARKBLUE_BG}%s  ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-12s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-${AVAILABLE_MODEL_WIDTH}s${RESET}${DARKBLUE_BG}${LIGHTBLUE}]${RESET}${DARKBLUE_BG}     ${RESET}${LIGHTBLUE}║${RESET}\n" \
         "$HEADER_DRIVE" "$GRAPH_LEFT_PAD" "$HEADER_GRAPH" "$GRAPH_RIGHT_PAD" "$HEADER_SERIAL" "$HEADER_MODEL"
 
     # Separator line with dashes
@@ -409,14 +409,14 @@ while true; do
             bar=$(create_bar_with_temp "$temp" "$temp_f")
 
             # Build the line with bar and temperature (added 6 spaces before serial bracket)
-            printf "${LIGHTBLUE}║${RESET} ${LIGHTBLUE}[${RESET} ${BOLD}${WHITE}%-8s${RESET} ${LIGHTBLUE}]${RESET} %s      ${LIGHTBLUE}[${RESET} ${WHITE}%-12s${RESET} ${LIGHTBLUE}]${RESET} ${LIGHTBLUE}[${RESET} ${WHITE}%-${AVAILABLE_MODEL_WIDTH}s${RESET}   ${LIGHTBLUE}]${RESET}  ${LIGHTBLUE}║${RESET}\n" \
+            printf "${LIGHTBLUE}║${RESET} ${LIGHTBLUE}[${RESET} ${BOLD}${WHITE}%-8s${RESET} ${LIGHTBLUE}]${RESET} %s      ${LIGHTBLUE}[${RESET} ${WHITE}%-12s${RESET} ${LIGHTBLUE}]${RESET} ${LIGHTBLUE}[${RESET} ${WHITE}%-${AVAILABLE_MODEL_WIDTH}s${RESET}${LIGHTBLUE}]${RESET}     ${LIGHTBLUE}║${RESET}\n" \
                 "$drive" "$bar" "$serial" "$model_display"
         else
             # Create a "No temperature data" bar matching the same length as temp bars
             # Bar length = (max_temp - min_temp + 1) = (65 - 28 + 1) = 38
             no_temp_bar="｢"
             for ((i=0; i<38; i++)); do
-                no_temp_bar+="\033[48;5;0m\033[38;5;240m▓\033[0m"
+                no_temp_bar+="\033[48;5;0m\033[38;5;240m■\033[0m"
             done
             # Add extra spacing after N/A to match temperature display width
             # Temperature format is "XX°C / XXXF" with padding = 14 chars total, N/A is 3 chars, so add 11 spaces
@@ -425,7 +425,7 @@ while true; do
             # Match the format of temperature-enabled drives - need to use echo for escape codes (4 spaces before serial bracket for N/A)
             printf "${LIGHTBLUE}║${RESET} ${LIGHTBLUE}[${RESET} ${BOLD}${WHITE}%-8s${RESET} ${LIGHTBLUE}]${RESET} " "$drive"
             echo -ne "$no_temp_bar"
-            printf "    ${LIGHTBLUE}[${RESET} ${WHITE}%-12s${RESET} ${LIGHTBLUE}]${RESET} ${LIGHTBLUE}[${RESET} ${WHITE}%-${AVAILABLE_MODEL_WIDTH}s${RESET}   ${LIGHTBLUE}]${RESET}  ${LIGHTBLUE}║${RESET}\n" \
+            printf "    ${LIGHTBLUE}[${RESET} ${WHITE}%-12s${RESET} ${LIGHTBLUE}]${RESET} ${LIGHTBLUE}[${RESET} ${WHITE}%-${AVAILABLE_MODEL_WIDTH}s${RESET}${LIGHTBLUE}]${RESET}     ${LIGHTBLUE}║${RESET}\n" \
                 "$serial" "$model_display"
         fi
     done
