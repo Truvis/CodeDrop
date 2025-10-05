@@ -145,7 +145,7 @@ create_bar_with_temp() {
 
     # Determine how many blocks to fill
     local filled=0
-    
+
     if [ "$temp" -le "$min_temp" ]; then
         # Show only 1 block for temps at or below 28°C
         filled=1
@@ -164,13 +164,13 @@ create_bar_with_temp() {
         if [ "$temp" -gt "$max_temp" ]; then
             temp=$max_temp
         fi
-        
+
         # Add 1 block per degree above 28°C
         filled=$((temp - min_temp + 1))
-        
+
         # First block represents 28°C and below (light blue)
         bar+="\033[38;5;117m■${RESET}"
-        
+
         # Add blocks for each degree above 28°C with gradient
         for ((i=1; i<filled; i++)); do
             local actual_temp=$((min_temp + i))
@@ -189,10 +189,10 @@ create_bar_with_temp() {
     # Get the color for the actual current temperature for the display
     local current_temp_color
     current_temp_color=$(get_color "$temp")
-    # Use printf to ensure F temp is always 3 digits wide (padded with spaces if needed)
+    # Build temperature display so the slash is uncolored
     local temp_display
-    temp_display=$(printf "%s°C / %3d°F" "$temp" "$temp_f")
-    bar+="\033[0m｣ ${current_temp_color}${temp_display}\033[0m"
+    temp_display="${current_temp_color}${temp}°C${RESET} / ${current_temp_color}$(printf "%3d" "$temp_f")°F${RESET}"
+    bar+="\033[0m｣ ${temp_display}"
 
     echo -e "$bar"
 }
@@ -214,11 +214,63 @@ YELLOW_BG="\033[48;5;220m"
 # Refresh interval in seconds
 REFRESH_INTERVAL=2
 
+# Log file location
+LOG_FILE="/var/log/drive_temps.log"
+
+# Function to log temperature
+log_temperature() {
+    local drive=$1
+    local temp=$2
+    local timestamp=$(date +%s)
+    echo "${timestamp}|${drive}|${temp}" >> "$LOG_FILE"
+}
+
+# Function to get min/max temps in last 24 hours for a drive
+get_24h_stats() {
+    local drive=$1
+    local cutoff=$(($(date +%s) - 86400))  # 24 hours ago
+
+    if [ ! -f "$LOG_FILE" ]; then
+        echo "N/A|N/A"
+        return
+    fi
+
+    # Get temps for this drive in last 24h
+    local temps=$(awk -F'|' -v d="$drive" -v c="$cutoff" '$1 >= c && $2 == d {print $3}' "$LOG_FILE")
+
+    if [ -z "$temps" ]; then
+        echo "N/A|N/A"
+        return
+    fi
+
+    # Calculate min and max
+    local min=$(echo "$temps" | sort -n | head -1)
+    local max=$(echo "$temps" | sort -n | tail -1)
+
+    echo "${min}|${max}"
+}
+
+# Function to clean old log entries (older than 24 hours)
+clean_old_logs() {
+    if [ ! -f "$LOG_FILE" ]; then
+        return
+    fi
+
+    local cutoff=$(($(date +%s) - 86400))
+    local temp_file=$(mktemp)
+
+    awk -F'|' -v c="$cutoff" '$1 >= c' "$LOG_FILE" > "$temp_file"
+    mv "$temp_file" "$LOG_FILE"
+}
+
 # Trap Ctrl+C to exit cleanly
 trap 'echo -e "\n${GRAY}Monitoring stopped.${RESET}"; exit 0' INT
 
 # Main monitoring loop
 while true; do
+    # Clean old log entries once per iteration
+    clean_old_logs
+
     # Clear screen
     clear
 
@@ -323,26 +375,29 @@ while true; do
     HEADER_GRAPH="TEMPERATURE GRAPH"
     HEADER_SERIAL="SERIAL"
     HEADER_MODEL="MODEL"
+    HEADER_24H="24H MIN/MAX (C/F)"
 
     # Calculate padding for "TEMPERATURE GRAPH" header
-    # The temperature column includes: ｢ (1) + bar (40) + ｣ (1) + space (1) + temp text (~14) = ~57 chars
+    # The temperature column includes: ｢ (1) + bar (38) + ｣ (1) + space (1) + temp text (~14) = ~55 chars
     # We want to center "TEMPERATURE GRAPH" in this space
-    TEMP_COL_WIDTH=57
+    TEMP_COL_WIDTH=55
     GRAPH_HEADER_LEN=${#HEADER_GRAPH}
     GRAPH_PAD_LEFT=$(( (TEMP_COL_WIDTH - GRAPH_HEADER_LEN) / 2 ))
     GRAPH_PAD_RIGHT=$(( TEMP_COL_WIDTH - GRAPH_HEADER_LEN - GRAPH_PAD_LEFT ))
     GRAPH_LEFT_PAD=$(printf ' %.0s' $(seq 1 $GRAPH_PAD_LEFT))
     GRAPH_RIGHT_PAD=$(printf ' %.0s' $(seq 1 $GRAPH_PAD_RIGHT))
 
-    # Available model width calculation
-    AVAILABLE_MODEL_WIDTH=$((TERM_WIDTH - 100))
+    # Available model width calculation - adjusted for wider 24h column
+    AVAILABLE_MODEL_WIDTH=$((TERM_WIDTH - 150))
     if [ $AVAILABLE_MODEL_WIDTH -lt 20 ]; then
         AVAILABLE_MODEL_WIDTH=20
     fi
 
     # Print header row with proper alignment and dark blue background (without background on borders)
-    printf "${LIGHTBLUE}║${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-8s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} %s${BOLD}${CYAN}%s${RESET}${DARKBLUE_BG}%s  ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-12s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-${AVAILABLE_MODEL_WIDTH}s${RESET}${DARKBLUE_BG}${LIGHTBLUE}]${RESET}${DARKBLUE_BG}     ${RESET}${LIGHTBLUE}║${RESET}\n" \
-        "$HEADER_DRIVE" "$GRAPH_LEFT_PAD" "$HEADER_GRAPH" "$GRAPH_RIGHT_PAD" "$HEADER_SERIAL" "$HEADER_MODEL"
+    # NOTE: removed 1 space before the '[' that starts the 24H column (now two spaces), added 6 spaces after the ending ']' before the right border,
+    # and removed one space after that ending ']' (now 11 spaces).
+    printf "${LIGHTBLUE}║${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-8s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} %s${BOLD}${CYAN}%s${RESET}${DARKBLUE_BG}%s   ${LIGHTBLUE}  [${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-35s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG}  ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-12s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-${AVAILABLE_MODEL_WIDTH}s ${RESET}${DARKBLUE_BG}${LIGHTBLUE}]${RESET}${DARKBLUE_BG}           ${RESET}${LIGHTBLUE}║${RESET}\n" \
+        "$HEADER_DRIVE" "$GRAPH_LEFT_PAD" "$HEADER_GRAPH" "$GRAPH_RIGHT_PAD" "$HEADER_24H" "$HEADER_SERIAL" "$HEADER_MODEL"
 
     # Separator line with dashes
     SEP_WIDTH=$((TERM_WIDTH - 4))
@@ -397,20 +452,55 @@ while true; do
         fi
 
         # Calculate available space for model based on terminal width
-        AVAILABLE_MODEL_WIDTH=$((TERM_WIDTH - 100))
+        AVAILABLE_MODEL_WIDTH=$((TERM_WIDTH - 150))
         if [ $AVAILABLE_MODEL_WIDTH -lt 20 ]; then
             AVAILABLE_MODEL_WIDTH=20
         fi
         model_display="${model:0:$AVAILABLE_MODEL_WIDTH}"
+
+        # Get 24h stats for this drive
+        stats=$(get_24h_stats "$drive")
+        min_temp=$(echo "$stats" | cut -d'|' -f1)
+        max_temp=$(echo "$stats" | cut -d'|' -f2)
+
+        # Format 24h display with colors
+        if [ "$min_temp" = "N/A" ]; then
+            stats_display="N/A           "
+        else
+            min_color=$(get_color "$min_temp")
+            max_color=$(get_color "$max_temp")
+            min_temp_f=$(( (min_temp * 9 / 5) + 32 ))
+            max_temp_f=$(( (max_temp * 9 / 5) + 32 ))
+            # Build colored string with proper spacing - format: 34°C/95°F - 40°C/104°F
+            stats_display="${min_color}${min_temp}°C/${min_temp_f}°F${RESET} - ${max_color}${max_temp}°C/${max_temp_f}°F${RESET}"
+            # Calculate padding needed (target is ~37 visible chars for the new format with spaces)
+            visible_len=$((${#min_temp} + ${#max_temp} + ${#min_temp_f} + ${#max_temp_f} + 15))  # 15 for °C/°F - °C/°F
+            padding_needed=$((37 - visible_len))
+            if [ $padding_needed -lt 0 ]; then padding_needed=0; fi
+            stats_display="${stats_display}$(printf ' %.0s' $(seq 1 $padding_needed))"
+        fi
 
         # Display drive information
         if [ -n "$temp" ] && [ "$temp" -eq "$temp" ] 2>/dev/null; then
             temp_f=$(( (temp * 9 / 5) + 32 ))
             bar=$(create_bar_with_temp "$temp" "$temp_f")
 
-            # Build the line with bar and temperature (added 6 spaces before serial bracket)
-            printf "${LIGHTBLUE}║${RESET} ${LIGHTBLUE}[${RESET} ${BOLD}${WHITE}%-8s${RESET} ${LIGHTBLUE}]${RESET} %s      ${LIGHTBLUE}[${RESET} ${WHITE}%-12s${RESET} ${LIGHTBLUE}]${RESET} ${LIGHTBLUE}[${RESET} ${WHITE}%-${AVAILABLE_MODEL_WIDTH}s${RESET}${LIGHTBLUE}]${RESET}     ${LIGHTBLUE}║${RESET}\n" \
-                "$drive" "$bar" "$serial" "$model_display"
+            # Log the temperature
+            log_temperature "$drive" "$temp"
+
+            # Build the line with bar and temperature (24h stats before serial) - use echo for stats
+            printf "${LIGHTBLUE}║${RESET} ${LIGHTBLUE}[${RESET} ${BOLD}${WHITE}%-8s${RESET} ${LIGHTBLUE}]${RESET} %s       ${LIGHTBLUE}[${RESET} " "$drive" "$bar"
+            echo -ne "$stats_display"
+
+            # Add one space before the closing bracket that precedes the SERIAL column for non-N/A serials only
+            # Remove right border for drive listing lines and add 1 space before the model closing bracket
+            if [ "$serial" = "N/A" ]; then
+                printf "${LIGHTBLUE}]${RESET}  ${LIGHTBLUE}[${RESET} ${WHITE}%-12s${RESET} ${LIGHTBLUE}]${RESET} ${LIGHTBLUE}[${RESET} ${WHITE}%-${AVAILABLE_MODEL_WIDTH}s ${RESET}${LIGHTBLUE}]${RESET}\n" \
+                    "$serial" "$model_display"
+            else
+                printf " ${LIGHTBLUE}]${RESET}  ${LIGHTBLUE}[${RESET} ${WHITE}%-12s${RESET} ${LIGHTBLUE}]${RESET} ${LIGHTBLUE}[${RESET} ${WHITE}%-${AVAILABLE_MODEL_WIDTH}s ${RESET}${LIGHTBLUE}]${RESET}\n" \
+                    "$serial" "$model_display"
+            fi
         else
             # Create a "No temperature data" bar matching the same length as temp bars
             # Bar length = (max_temp - min_temp + 1) = (65 - 28 + 1) = 38
@@ -422,11 +512,12 @@ while true; do
             # Temperature format is "XX°C / XXXF" with padding = 14 chars total, N/A is 3 chars, so add 11 spaces
             no_temp_bar+="\033[0m｣ \033[38;5;240mN/A\033[0m           "
 
-            # Match the format of temperature-enabled drives - need to use echo for escape codes (4 spaces before serial bracket for N/A)
+            # Match the format of temperature-enabled drives - need to use echo for escape codes (5 spaces before 24h bracket for N/A)
             printf "${LIGHTBLUE}║${RESET} ${LIGHTBLUE}[${RESET} ${BOLD}${WHITE}%-8s${RESET} ${LIGHTBLUE}]${RESET} " "$drive"
             echo -ne "$no_temp_bar"
-            printf "    ${LIGHTBLUE}[${RESET} ${WHITE}%-12s${RESET} ${LIGHTBLUE}]${RESET} ${LIGHTBLUE}[${RESET} ${WHITE}%-${AVAILABLE_MODEL_WIDTH}s${RESET}${LIGHTBLUE}]${RESET}     ${LIGHTBLUE}║${RESET}\n" \
-                "$serial" "$model_display"
+            # Removed right border for drive listing and added a space before model closing bracket
+            printf "     ${LIGHTBLUE}[${RESET} %-35s ${LIGHTBLUE}]${RESET}  ${LIGHTBLUE}[${RESET} ${WHITE}%-12s${RESET} ${LIGHTBLUE}]${RESET} ${LIGHTBLUE}[${RESET} ${WHITE}%-${AVAILABLE_MODEL_WIDTH}s ${RESET}${LIGHTBLUE}]${RESET}\n" \
+                "N/A" "$serial" "$model_display"
         fi
     done
 
