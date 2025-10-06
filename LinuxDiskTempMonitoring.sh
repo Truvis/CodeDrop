@@ -553,7 +553,7 @@ while true; do
 
     # Calculate model padding - need to account for all the formatting correctly
     MODEL_HEADER_LEN=${#HEADER_MODEL}
-    MODEL_PAD_NEEDED=$((MODEL_WIDTH - MODEL_HEADER_LEN - 6))  # -6 for brackets and spaces
+    MODEL_PAD_NEEDED=$((MODEL_WIDTH - MODEL_HEADER_LEN - 2))  # -6 for brackets and spaces
     if [ $MODEL_PAD_NEEDED -lt 0 ]; then MODEL_PAD_NEEDED=0; fi
 
     # Print header row with left ║ border, with dark blue background
