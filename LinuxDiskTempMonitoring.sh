@@ -5,6 +5,30 @@
 # Temperature scale now uses a 1-color-per-degree map for 30°C..65°C
 # Truvis Thornton [ http://truv.is ]
 
+# ============================================================================
+# Configuration Variables
+# ============================================================================
+
+# Time window for min/max statistics (in hours)
+# Default: 24 hours
+STATS_TIME_WINDOW=24
+
+# Hide drives with no temperature data (N/A)
+# Options: true | false
+HIDE_NA_DRIVES=false
+
+# Temperature display format
+# Options: "both" | "celsius" | "fahrenheit"
+TEMP_DISPLAY="both"
+
+# Refresh interval in seconds
+REFRESH_INTERVAL=2
+
+# Log file location
+LOG_FILE="/var/log/drive_temps.log"
+
+# ============================================================================
+
 # Check if running as root (needed for smartctl)
 if [ "$EUID" -ne 0 ]; then
     echo "Please run as root (sudo)"
@@ -190,17 +214,31 @@ create_bar_with_temp() {
     local current_temp_color
     current_temp_color=$(get_color "$temp")
     
-    # Calculate spacing to maintain fixed width
-    # Format: "XX°C / XXXF  " where F is right-aligned to 3 chars with printf %3d
-    # Total visible: len(C_digits) + "°C / " (5) + F_padded (3) + "°F" (2) = len(C_digits) + 10
-    local visible_len=$((${#temp} + 10))
-    local padding=$((13 - visible_len))  # Target 13 chars to handle 1-2 digit C temps
-    if [ $padding -lt 0 ]; then padding=0; fi
-    local spacing=$(printf ' %.0s' $(seq 1 $padding))
-    
-    # Build temperature display with fixed spacing
+    # Build temperature display based on TEMP_DISPLAY setting
     local temp_display
-    temp_display="${current_temp_color}${temp}°C${RESET} / ${current_temp_color}$(printf "%3d" "$temp_f")°F${RESET}${spacing}"
+    if [ "$TEMP_DISPLAY" = "celsius" ]; then
+        # Celsius only: "35°C  "
+        temp_display="${current_temp_color}${temp}°C${RESET}"
+        local visible_len=${#temp}
+        local padding=$((5 - visible_len))  # Target 5 chars for C-only
+        if [ $padding -lt 0 ]; then padding=0; fi
+        temp_display="${temp_display}$(printf ' %.0s' $(seq 1 $padding))"
+    elif [ "$TEMP_DISPLAY" = "fahrenheit" ]; then
+        # Fahrenheit only: "95°F  " or "104°F "
+        temp_display="${current_temp_color}$(printf "%3d" "$temp_f")°F${RESET}"
+        local visible_len=$((${#temp_f} + 2))
+        local padding=$((6 - visible_len))  # Target 6 chars for F-only
+        if [ $padding -lt 0 ]; then padding=0; fi
+        temp_display="${temp_display}$(printf ' %.0s' $(seq 1 $padding))"
+    else
+        # Both (default): "35°C /  95°F  " or "40°C / 104°F "
+        local visible_len=$((${#temp} + 10))
+        local padding=$((13 - visible_len))
+        if [ $padding -lt 0 ]; then padding=0; fi
+        local spacing=$(printf ' %.0s' $(seq 1 $padding))
+        temp_display="${current_temp_color}${temp}°C${RESET} / ${current_temp_color}$(printf "%3d" "$temp_f")°F${RESET}${spacing}"
+    fi
+    
     bar+="\033[0m｣ ${temp_display}"
 
     echo -e "$bar"
@@ -220,12 +258,6 @@ DARKBLUE_BG="\033[48;5;17m"
 PURPLE_BG="\033[48;5;54m"
 YELLOW_BG="\033[48;5;220m"
 
-# Refresh interval in seconds
-REFRESH_INTERVAL=2
-
-# Log file location
-LOG_FILE="/var/log/drive_temps.log"
-
 # Function to log temperature
 log_temperature() {
     local drive=$1
@@ -234,17 +266,17 @@ log_temperature() {
     echo "${timestamp}|${drive}|${temp}" >> "$LOG_FILE"
 }
 
-# Function to get min/max temps in last 24 hours for a drive
-get_24h_stats() {
+# Function to get min/max temps within the configured time window for a drive
+get_stats() {
     local drive=$1
-    local cutoff=$(($(date +%s) - 86400))  # 24 hours ago
+    local cutoff=$(($(date +%s) - (STATS_TIME_WINDOW * 3600)))  # Convert hours to seconds
 
     if [ ! -f "$LOG_FILE" ]; then
         echo "N/A|N/A"
         return
     fi
 
-    # Get temps for this drive in last 24h
+    # Get temps for this drive within the time window
     local temps=$(awk -F'|' -v d="$drive" -v c="$cutoff" '$1 >= c && $2 == d {print $3}' "$LOG_FILE")
 
     if [ -z "$temps" ]; then
@@ -259,17 +291,29 @@ get_24h_stats() {
     echo "${min}|${max}"
 }
 
-# Function to clean old log entries (older than 24 hours)
+# Function to clean old log entries (older than configured time window)
 clean_old_logs() {
     if [ ! -f "$LOG_FILE" ]; then
         return
     fi
 
-    local cutoff=$(($(date +%s) - 86400))
+    local cutoff=$(($(date +%s) - (STATS_TIME_WINDOW * 3600)))  # Convert hours to seconds
     local temp_file=$(mktemp)
 
+    # Keep only entries within the time window
     awk -F'|' -v c="$cutoff" '$1 >= c' "$LOG_FILE" > "$temp_file"
-    mv "$temp_file" "$LOG_FILE"
+    
+    # Only update the log file if the temp file was created successfully
+    if [ -s "$temp_file" ]; then
+        mv "$temp_file" "$LOG_FILE"
+    else
+        # If temp file is empty but log file exists, it means all entries are old
+        # Keep the file but make it empty
+        if [ -f "$LOG_FILE" ]; then
+            > "$LOG_FILE"
+        fi
+        rm -f "$temp_file"
+    fi
 }
 
 # Trap Ctrl+C to exit cleanly
@@ -293,7 +337,7 @@ while true; do
     echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}╔${BORDER_LINE}╗${RESET}"
 
     # Title line
-    TITLE="Drive Temperature Monitor - Version 1 [ Truvis Thornton - http://truv.is ]"
+    TITLE="Drive Temperature Monitor - Version 2 [ Truvis Thornton - http://truv.is ]"
     TITLE_LEN=${#TITLE}
     # Account for the space after ║ and before ║ (2 spaces total) plus the two ║ chars (2)
     PAD_LEN=$((TERM_WIDTH - TITLE_LEN - 4))
@@ -301,8 +345,8 @@ while true; do
     PADDING=$(printf ' %.0s' $(seq 1 $PAD_LEN))
     echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${PURPLE_BG} ${BOLD}${YELLOW}${TITLE}${PADDING} ${RESET}${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}"
 
-    # Refresh info line
-    REFRESH_TEXT="Refreshing every ${REFRESH_INTERVAL}s - Press Ctrl+C to exit"
+    # Refresh info line with time window
+    REFRESH_TEXT="Refreshing every ${REFRESH_INTERVAL}s - Stats Window: ${STATS_TIME_WINDOW}h - Press Ctrl+C to exit"
     REFRESH_LEN=${#REFRESH_TEXT}
     REFRESH_PAD=$((TERM_WIDTH - REFRESH_LEN - 4))
     if [ $REFRESH_PAD -lt 0 ]; then REFRESH_PAD=0; fi
@@ -384,7 +428,15 @@ while true; do
     HEADER_GRAPH="TEMPERATURE GRAPH"
     HEADER_SERIAL="SERIAL"
     HEADER_MODEL="MODEL"
-    HEADER_24H="24H MIN/MAX (C/F)"
+    
+    # Set stats header based on temperature display format
+    if [ "$TEMP_DISPLAY" = "celsius" ]; then
+        HEADER_STATS="${STATS_TIME_WINDOW}H MIN/MAX (C)"
+    elif [ "$TEMP_DISPLAY" = "fahrenheit" ]; then
+        HEADER_STATS="${STATS_TIME_WINDOW}H MIN/MAX (F)"
+    else
+        HEADER_STATS="${STATS_TIME_WINDOW}H MIN/MAX (C/F)"
+    fi
 
     # Calculate padding for "TEMPERATURE GRAPH" header
     # The temperature column includes: ｢ (1) + bar (38) + ｣ (1) + space (1) + temp text (~14) = ~55 chars
@@ -396,7 +448,7 @@ while true; do
     GRAPH_LEFT_PAD=$(printf ' %.0s' $(seq 1 $GRAPH_PAD_LEFT))
     GRAPH_RIGHT_PAD=$(printf ' %.0s' $(seq 1 $GRAPH_PAD_RIGHT))
 
-    # Available model width calculation - adjusted for 24h column
+    # Available model width calculation
     AVAILABLE_MODEL_WIDTH=$((TERM_WIDTH - 150))
     if [ $AVAILABLE_MODEL_WIDTH -lt 20 ]; then
         AVAILABLE_MODEL_WIDTH=20
@@ -404,7 +456,7 @@ while true; do
 
     # Print header row with proper alignment and dark blue background (without background on borders)
     printf "${LIGHTBLUE}║${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-8s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} %s${BOLD}${CYAN}%s${RESET}${DARKBLUE_BG}%s ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-23s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG}  ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-24s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-${AVAILABLE_MODEL_WIDTH}s ${RESET}${DARKBLUE_BG}${LIGHTBLUE}]${RESET}${DARKBLUE_BG}               ${RESET}${LIGHTBLUE}║${RESET}\n" \
-        "$HEADER_DRIVE" "$GRAPH_LEFT_PAD" "$HEADER_GRAPH" "$GRAPH_RIGHT_PAD" "$HEADER_24H" "$HEADER_SERIAL" "$HEADER_MODEL"
+        "$HEADER_DRIVE" "$GRAPH_LEFT_PAD" "$HEADER_GRAPH" "$GRAPH_RIGHT_PAD" "$HEADER_STATS" "$HEADER_SERIAL" "$HEADER_MODEL"
 
     # Separator line with dashes
     SEP_WIDTH=$((TERM_WIDTH - 4))
@@ -465,34 +517,52 @@ while true; do
         fi
         model_display="${model:0:$AVAILABLE_MODEL_WIDTH}"
 
-        # Get 24h stats for this drive
-        stats=$(get_24h_stats "$drive")
+        # Get stats for this drive within the configured time window
+        stats=$(get_stats "$drive")
         min_temp=$(echo "$stats" | cut -d'|' -f1)
         max_temp=$(echo "$stats" | cut -d'|' -f2)
 
-        # Format 24h display with colors
+        # Format stats display with colors based on TEMP_DISPLAY setting
         if [ "$min_temp" = "N/A" ]; then
-            stats_display="N/A                    "  # Pad to 23 chars
+            if [ "$TEMP_DISPLAY" = "celsius" ]; then
+                stats_display="N/A     "  # Pad for C-only
+            elif [ "$TEMP_DISPLAY" = "fahrenheit" ]; then
+                stats_display="N/A      "  # Pad for F-only
+            else
+                stats_display="N/A                    "  # Pad to 23 chars for both
+            fi
         else
             min_color=$(get_color "$min_temp")
             max_color=$(get_color "$max_temp")
             min_temp_f=$(( (min_temp * 9 / 5) + 32 ))
             max_temp_f=$(( (max_temp * 9 / 5) + 32 ))
             
-            # Format Fahrenheit with leading space for 2-digit values (right-align to 3 chars)
-            min_temp_f_formatted=$(printf "%3d" "$min_temp_f")
-            max_temp_f_formatted=$(printf "%3d" "$max_temp_f")
-            
-            # Build colored string - format: 34°C/ 96°F - 40°C/104°F
-            stats_display="${min_color}${min_temp}°C/${min_temp_f_formatted}°F${RESET} - ${max_color}${max_temp}°C/${max_temp_f_formatted}°F${RESET}"
-            
-            # Calculate visible length: C temps + F temps (always 3 chars each) + fixed chars "°C/°F - °C/°F" (13 chars)
-            visible_len=$((${#min_temp} + 3 + ${#max_temp} + 3 + 13))
-            
-            # Target width is 23 chars for consistent right alignment
-            padding_needed=$((23 - visible_len))
-            if [ $padding_needed -lt 0 ]; then padding_needed=0; fi
-            stats_display="${stats_display}$(printf ' %.0s' $(seq 1 $padding_needed))"
+            if [ "$TEMP_DISPLAY" = "celsius" ]; then
+                # Celsius only: "34°C - 36°C"
+                stats_display="${min_color}${min_temp}°C${RESET} - ${max_color}${max_temp}°C${RESET}"
+                visible_len=$((${#min_temp} + ${#max_temp} + 5))  # 5 for "°C - °C"
+                padding_needed=$((11 - visible_len))
+                if [ $padding_needed -lt 0 ]; then padding_needed=0; fi
+                stats_display="${stats_display}$(printf ' %.0s' $(seq 1 $padding_needed))"
+            elif [ "$TEMP_DISPLAY" = "fahrenheit" ]; then
+                # Fahrenheit only: " 93°F - 96°F"
+                min_temp_f_formatted=$(printf "%3d" "$min_temp_f")
+                max_temp_f_formatted=$(printf "%3d" "$max_temp_f")
+                stats_display="${min_color}${min_temp_f_formatted}°F${RESET} - ${max_color}${max_temp_f_formatted}°F${RESET}"
+                visible_len=$((3 + 3 + 7))  # 3 + 3 digits + "°F - °F" (7)
+                padding_needed=$((13 - visible_len))
+                if [ $padding_needed -lt 0 ]; then padding_needed=0; fi
+                stats_display="${stats_display}$(printf ' %.0s' $(seq 1 $padding_needed))"
+            else
+                # Both: "34°C/ 96°F - 40°C/104°F"
+                min_temp_f_formatted=$(printf "%3d" "$min_temp_f")
+                max_temp_f_formatted=$(printf "%3d" "$max_temp_f")
+                stats_display="${min_color}${min_temp}°C/${min_temp_f_formatted}°F${RESET} - ${max_color}${max_temp}°C/${max_temp_f_formatted}°F${RESET}"
+                visible_len=$((${#min_temp} + 3 + ${#max_temp} + 3 + 13))
+                padding_needed=$((23 - visible_len))
+                if [ $padding_needed -lt 0 ]; then padding_needed=0; fi
+                stats_display="${stats_display}$(printf ' %.0s' $(seq 1 $padding_needed))"
+            fi
         fi
 
         # Display drive information
@@ -503,12 +573,17 @@ while true; do
             # Log the temperature
             log_temperature "$drive" "$temp"
 
-            # Build the line with bar and temperature (24h stats before serial)
+            # Build the line with bar and temperature (stats before serial)
             printf "${LIGHTBLUE}║${RESET} ${LIGHTBLUE}[${RESET} ${BOLD}${WHITE}%-8s${RESET} ${LIGHTBLUE}]${RESET} %s  ${LIGHTBLUE}[${RESET} " "$drive" "$bar"
             echo -ne "$stats_display"
             printf "${LIGHTBLUE}]${RESET}  ${LIGHTBLUE}[${RESET} ${WHITE}%-24s${RESET} ${LIGHTBLUE}]${RESET} ${LIGHTBLUE}[${RESET} ${WHITE}%-${AVAILABLE_MODEL_WIDTH}s ${RESET}${LIGHTBLUE}]${RESET}\n" \
                 "$serial" "$model_display"
         else
+            # Skip this drive if HIDE_NA_DRIVES is enabled
+            if [ "$HIDE_NA_DRIVES" = "true" ]; then
+                continue
+            fi
+            
             # Create a "No temperature data" bar matching the same length as temp bars
             # Bar length = (max_temp - min_temp + 1) = (65 - 28 + 1) = 38
             no_temp_bar="｢"
@@ -518,7 +593,7 @@ while true; do
             # Add spacing after N/A to match temperature display width (13 chars total: N/A + 10 spaces)
             no_temp_bar+="\033[0m｣ \033[38;5;240mN/A\033[0m          "
 
-            # Match the format of temperature-enabled drives (2 spaces before 24h bracket)
+            # Match the format of temperature-enabled drives (2 spaces before stats bracket)
             printf "${LIGHTBLUE}║${RESET} ${LIGHTBLUE}[${RESET} ${BOLD}${WHITE}%-8s${RESET} ${LIGHTBLUE}]${RESET} " "$drive"
             echo -ne "$no_temp_bar"
             printf "  ${LIGHTBLUE}[${RESET} %-23s ${LIGHTBLUE}]${RESET}  ${LIGHTBLUE}[${RESET} ${WHITE}%-24s${RESET} ${LIGHTBLUE}]${RESET} ${LIGHTBLUE}[${RESET} ${WHITE}%-${AVAILABLE_MODEL_WIDTH}s ${RESET}${LIGHTBLUE}]${RESET}\n" \
