@@ -237,12 +237,12 @@ create_bar_with_temp() {
         if [ $padding -lt 0 ]; then padding=0; fi
         temp_display="${temp_display}$(printf ' %.0s' $(seq 1 $padding))"
     else
-        # Both (default): "35°C /  95°F  " or "40°C / 104°F "
+        # Both (default): "35°C/95°F  " or "40°C/104°F "
         local visible_len=$((${#temp} + 10))
-        local padding=$((13 - visible_len))
+        local padding=$((9 - visible_len))
         if [ $padding -lt 0 ]; then padding=0; fi
         local spacing=$(printf ' %.0s' $(seq 1 $padding))
-        temp_display="${current_temp_color}${temp}°C${RESET} / ${current_temp_color}$(printf "%3d" "$temp_f")°F${RESET}${spacing}"
+        temp_display="${current_temp_color}${temp}°C${RESET}${BOLD}${WHITE}/${RESET}${current_temp_color}$(printf "%3d" "$temp_f")°F${RESET}${spacing}"
     fi
     
     bar+="\033[0m｣ ${temp_display}"
@@ -655,7 +655,7 @@ while true; do
             else
                 min_temp_f_formatted=$(printf "%3d" "$min_temp_f")
                 max_temp_f_formatted=$(printf "%3d" "$max_temp_f")
-                stats_display="${min_color}${min_temp}°C/${min_temp_f_formatted}°F${RESET} - ${max_color}${max_temp}°C/${max_temp_f_formatted}°F${RESET}"
+                stats_display="${min_color}${min_temp}°C${RESET}${BOLD}${WHITE}/${RESET}${min_color}${min_temp_f_formatted}°F${RESET} - ${max_color}${max_temp}°C${RESET}${BOLD}${WHITE}/${RESET}${max_color}${max_temp_f_formatted}°F${RESET}"
                 visible_len=$((${#min_temp} + 3 + ${#max_temp} + 3 + 13))
                 stats_pad=$((STATS_WIDTH - visible_len - 4))
             fi
@@ -671,7 +671,7 @@ while true; do
             log_temperature "$drive" "$temp"
 
             # Build the line with bar and temperature (with left border)
-            printf "${LIGHTBLUE}║${RESET} ${LIGHTBLUE}[${RESET} ${BOLD}${WHITE}%-8s${RESET} ${LIGHTBLUE}]${RESET} %s  ${LIGHTBLUE}[${RESET} " "$drive" "$bar"
+            printf "${LIGHTBLUE}║${RESET} ${LIGHTBLUE}[${RESET} ${BOLD}${WHITE}%-8s${RESET} ${LIGHTBLUE}]${RESET} %s    ${LIGHTBLUE}[${RESET} " "$drive" "$bar"
             echo -ne "$stats_display"
             printf "%-${stats_pad}s${LIGHTBLUE}]${RESET}  ${LIGHTBLUE}[${RESET} ${WHITE}%-${serial_display_width}s${RESET} ${LIGHTBLUE}]${RESET} ${LIGHTBLUE}[${RESET} ${WHITE}%-${model_display_width}s   ${RESET}${LIGHTBLUE}]${RESET}${LIGHTBLUE}║${RESET}\n" \
                 "" "$serial" "$model_display"
