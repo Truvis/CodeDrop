@@ -189,9 +189,18 @@ create_bar_with_temp() {
     # Get the color for the actual current temperature for the display
     local current_temp_color
     current_temp_color=$(get_color "$temp")
-    # Build temperature display so the slash is uncolored
+    
+    # Calculate spacing to maintain fixed width
+    # Format: "XX°C / XXXF  " where F is right-aligned to 3 chars with printf %3d
+    # Total visible: len(C_digits) + "°C / " (5) + F_padded (3) + "°F" (2) = len(C_digits) + 10
+    local visible_len=$((${#temp} + 10))
+    local padding=$((13 - visible_len))  # Target 13 chars to handle 1-2 digit C temps
+    if [ $padding -lt 0 ]; then padding=0; fi
+    local spacing=$(printf ' %.0s' $(seq 1 $padding))
+    
+    # Build temperature display with fixed spacing
     local temp_display
-    temp_display="${current_temp_color}${temp}°C${RESET} / ${current_temp_color}$(printf "%3d" "$temp_f")°F${RESET}"
+    temp_display="${current_temp_color}${temp}°C${RESET} / ${current_temp_color}$(printf "%3d" "$temp_f")°F${RESET}${spacing}"
     bar+="\033[0m｣ ${temp_display}"
 
     echo -e "$bar"
@@ -387,16 +396,14 @@ while true; do
     GRAPH_LEFT_PAD=$(printf ' %.0s' $(seq 1 $GRAPH_PAD_LEFT))
     GRAPH_RIGHT_PAD=$(printf ' %.0s' $(seq 1 $GRAPH_PAD_RIGHT))
 
-    # Available model width calculation - adjusted for wider 24h column
+    # Available model width calculation - adjusted for 24h column
     AVAILABLE_MODEL_WIDTH=$((TERM_WIDTH - 150))
     if [ $AVAILABLE_MODEL_WIDTH -lt 20 ]; then
         AVAILABLE_MODEL_WIDTH=20
     fi
 
     # Print header row with proper alignment and dark blue background (without background on borders)
-    # NOTE: removed 1 space before the '[' that starts the 24H column (now two spaces), added 6 spaces after the ending ']' before the right border,
-    # and removed one space after that ending ']' (now 11 spaces).
-    printf "${LIGHTBLUE}║${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-8s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} %s${BOLD}${CYAN}%s${RESET}${DARKBLUE_BG}%s   ${LIGHTBLUE}  [${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-35s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG}  ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-12s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-${AVAILABLE_MODEL_WIDTH}s ${RESET}${DARKBLUE_BG}${LIGHTBLUE}]${RESET}${DARKBLUE_BG}           ${RESET}${LIGHTBLUE}║${RESET}\n" \
+    printf "${LIGHTBLUE}║${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-8s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} %s${BOLD}${CYAN}%s${RESET}${DARKBLUE_BG}%s   ${LIGHTBLUE}  [${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-23s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG}  ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-24s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-${AVAILABLE_MODEL_WIDTH}s ${RESET}${DARKBLUE_BG}${LIGHTBLUE}]${RESET}${DARKBLUE_BG}           ${RESET}${LIGHTBLUE}║${RESET}\n" \
         "$HEADER_DRIVE" "$GRAPH_LEFT_PAD" "$HEADER_GRAPH" "$GRAPH_RIGHT_PAD" "$HEADER_24H" "$HEADER_SERIAL" "$HEADER_MODEL"
 
     # Separator line with dashes
@@ -440,7 +447,7 @@ while true; do
         if [ -z "$serial" ]; then
             serial="N/A"
         fi
-        serial="${serial:0:12}"  # Truncate to 12 chars
+        serial="${serial:0:24}"  # Truncate to 24 chars
 
         # Get temperature
         temp=$(smartctl -A "$device" 2>/dev/null | grep -i "Temperature_Celsius" | awk '{print $10}')
@@ -465,17 +472,25 @@ while true; do
 
         # Format 24h display with colors
         if [ "$min_temp" = "N/A" ]; then
-            stats_display="N/A           "
+            stats_display="N/A                    "  # Pad to 23 chars
         else
             min_color=$(get_color "$min_temp")
             max_color=$(get_color "$max_temp")
             min_temp_f=$(( (min_temp * 9 / 5) + 32 ))
             max_temp_f=$(( (max_temp * 9 / 5) + 32 ))
-            # Build colored string with proper spacing - format: 34°C/95°F - 40°C/104°F
-            stats_display="${min_color}${min_temp}°C/${min_temp_f}°F${RESET} - ${max_color}${max_temp}°C/${max_temp_f}°F${RESET}"
-            # Calculate padding needed (target is ~37 visible chars for the new format with spaces)
-            visible_len=$((${#min_temp} + ${#max_temp} + ${#min_temp_f} + ${#max_temp_f} + 15))  # 15 for °C/°F - °C/°F
-            padding_needed=$((37 - visible_len))
+            
+            # Format Fahrenheit with leading space for 2-digit values (right-align to 3 chars)
+            min_temp_f_formatted=$(printf "%3d" "$min_temp_f")
+            max_temp_f_formatted=$(printf "%3d" "$max_temp_f")
+            
+            # Build colored string - format: 34°C/ 96°F - 40°C/104°F
+            stats_display="${min_color}${min_temp}°C/${min_temp_f_formatted}°F${RESET} - ${max_color}${max_temp}°C/${max_temp_f_formatted}°F${RESET}"
+            
+            # Calculate visible length: C temps + F temps (always 3 chars each) + fixed chars "°C/°F - °C/°F" (13 chars)
+            visible_len=$((${#min_temp} + 3 + ${#max_temp} + 3 + 13))
+            
+            # Target width is 23 chars for consistent right alignment
+            padding_needed=$((23 - visible_len))
             if [ $padding_needed -lt 0 ]; then padding_needed=0; fi
             stats_display="${stats_display}$(printf ' %.0s' $(seq 1 $padding_needed))"
         fi
@@ -488,19 +503,11 @@ while true; do
             # Log the temperature
             log_temperature "$drive" "$temp"
 
-            # Build the line with bar and temperature (24h stats before serial) - use echo for stats
+            # Build the line with bar and temperature (24h stats before serial)
             printf "${LIGHTBLUE}║${RESET} ${LIGHTBLUE}[${RESET} ${BOLD}${WHITE}%-8s${RESET} ${LIGHTBLUE}]${RESET} %s       ${LIGHTBLUE}[${RESET} " "$drive" "$bar"
             echo -ne "$stats_display"
-
-            # Add one space before the closing bracket that precedes the SERIAL column for non-N/A serials only
-            # Remove right border for drive listing lines and add 1 space before the model closing bracket
-            if [ "$serial" = "N/A" ]; then
-                printf "${LIGHTBLUE}]${RESET}  ${LIGHTBLUE}[${RESET} ${WHITE}%-12s${RESET} ${LIGHTBLUE}]${RESET} ${LIGHTBLUE}[${RESET} ${WHITE}%-${AVAILABLE_MODEL_WIDTH}s ${RESET}${LIGHTBLUE}]${RESET}\n" \
-                    "$serial" "$model_display"
-            else
-                printf " ${LIGHTBLUE}]${RESET}  ${LIGHTBLUE}[${RESET} ${WHITE}%-12s${RESET} ${LIGHTBLUE}]${RESET} ${LIGHTBLUE}[${RESET} ${WHITE}%-${AVAILABLE_MODEL_WIDTH}s ${RESET}${LIGHTBLUE}]${RESET}\n" \
-                    "$serial" "$model_display"
-            fi
+            printf "${LIGHTBLUE}]${RESET}  ${LIGHTBLUE}[${RESET} ${WHITE}%-24s${RESET} ${LIGHTBLUE}]${RESET} ${LIGHTBLUE}[${RESET} ${WHITE}%-${AVAILABLE_MODEL_WIDTH}s ${RESET}${LIGHTBLUE}]${RESET}\n" \
+                "$serial" "$model_display"
         else
             # Create a "No temperature data" bar matching the same length as temp bars
             # Bar length = (max_temp - min_temp + 1) = (65 - 28 + 1) = 38
@@ -508,15 +515,13 @@ while true; do
             for ((i=0; i<38; i++)); do
                 no_temp_bar+="\033[48;5;0m\033[38;5;240m■\033[0m"
             done
-            # Add extra spacing after N/A to match temperature display width
-            # Temperature format is "XX°C / XXXF" with padding = 14 chars total, N/A is 3 chars, so add 11 spaces
+            # Add extra spacing after N/A to match temperature display width (14 chars visible)
             no_temp_bar+="\033[0m｣ \033[38;5;240mN/A\033[0m           "
 
-            # Match the format of temperature-enabled drives - need to use echo for escape codes (5 spaces before 24h bracket for N/A)
+            # Match the format of temperature-enabled drives (6 spaces before 24h bracket)
             printf "${LIGHTBLUE}║${RESET} ${LIGHTBLUE}[${RESET} ${BOLD}${WHITE}%-8s${RESET} ${LIGHTBLUE}]${RESET} " "$drive"
             echo -ne "$no_temp_bar"
-            # Removed right border for drive listing and added a space before model closing bracket
-            printf "     ${LIGHTBLUE}[${RESET} %-35s ${LIGHTBLUE}]${RESET}  ${LIGHTBLUE}[${RESET} ${WHITE}%-12s${RESET} ${LIGHTBLUE}]${RESET} ${LIGHTBLUE}[${RESET} ${WHITE}%-${AVAILABLE_MODEL_WIDTH}s ${RESET}${LIGHTBLUE}]${RESET}\n" \
+            printf "      ${LIGHTBLUE}[${RESET} %-23s ${LIGHTBLUE}]${RESET}  ${LIGHTBLUE}[${RESET} ${WHITE}%-24s${RESET} ${LIGHTBLUE}]${RESET} ${LIGHTBLUE}[${RESET} ${WHITE}%-${AVAILABLE_MODEL_WIDTH}s ${RESET}${LIGHTBLUE}]${RESET}\n" \
                 "N/A" "$serial" "$model_display"
         fi
     done
