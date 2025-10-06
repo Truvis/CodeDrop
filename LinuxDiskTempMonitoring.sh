@@ -21,10 +21,16 @@ HIDE_NA_DRIVES=false
 # Options: "both" | "celsius" | "fahrenheit"
 TEMP_DISPLAY="both"
 
+# Use in-memory tracking instead of file-based logging
+# Options: true | false
+# When true: Stats are tracked in memory only (lost on restart)
+# When false: Stats are logged to LOG_FILE for persistence
+USE_MEMORY_TRACKING=false
+
 # Refresh interval in seconds
 REFRESH_INTERVAL=2
 
-# Log file location
+# Log file location (only used when USE_MEMORY_TRACKING=false)
 LOG_FILE="/var/log/drive_temps.log"
 
 # ============================================================================
@@ -258,12 +264,22 @@ DARKBLUE_BG="\033[48;5;17m"
 PURPLE_BG="\033[48;5;54m"
 YELLOW_BG="\033[48;5;220m"
 
+# In-memory tracking storage (associative array)
+declare -A MEMORY_LOG
+
 # Function to log temperature
 log_temperature() {
     local drive=$1
     local temp=$2
     local timestamp=$(date +%s)
-    echo "${timestamp}|${drive}|${temp}" >> "$LOG_FILE"
+    
+    if [ "$USE_MEMORY_TRACKING" = "true" ]; then
+        # Store in memory with format: timestamp|drive|temp
+        MEMORY_LOG["${timestamp}:${drive}"]="${timestamp}|${drive}|${temp}"
+    else
+        # Store in file
+        echo "${timestamp}|${drive}|${temp}" >> "$LOG_FILE"
+    fi
 }
 
 # Function to get min/max temps within the configured time window for a drive
@@ -271,48 +287,96 @@ get_stats() {
     local drive=$1
     local cutoff=$(($(date +%s) - (STATS_TIME_WINDOW * 3600)))  # Convert hours to seconds
 
-    if [ ! -f "$LOG_FILE" ]; then
-        echo "N/A|N/A"
-        return
+    if [ "$USE_MEMORY_TRACKING" = "true" ]; then
+        # Get temps from memory
+        local temps=""
+        for key in "${!MEMORY_LOG[@]}"; do
+            local entry="${MEMORY_LOG[$key]}"
+            local timestamp
+            local entry_drive
+            local temp
+            timestamp=$(echo "$entry" | cut -d'|' -f1)
+            entry_drive=$(echo "$entry" | cut -d'|' -f2)
+            temp=$(echo "$entry" | cut -d'|' -f3)
+            
+            if [ "$entry_drive" = "$drive" ] && [ "$timestamp" -ge "$cutoff" ]; then
+                temps="${temps}${temp}"$'\n'
+            fi
+        done
+        
+        if [ -z "$temps" ]; then
+            echo "N/A|N/A"
+            return
+        fi
+        
+        # Calculate min and max
+        local min
+        local max
+        min=$(echo "$temps" | grep -v '^$' | sort -n | head -1)
+        max=$(echo "$temps" | grep -v '^$' | sort -n | tail -1)
+        echo "${min}|${max}"
+    else
+        # Get temps from file
+        if [ ! -f "$LOG_FILE" ]; then
+            echo "N/A|N/A"
+            return
+        fi
+
+        # Get temps for this drive within the time window
+        local temps
+        temps=$(awk -F'|' -v d="$drive" -v c="$cutoff" '$1 >= c && $2 == d {print $3}' "$LOG_FILE")
+
+        if [ -z "$temps" ]; then
+            echo "N/A|N/A"
+            return
+        fi
+
+        # Calculate min and max
+        local min
+        local max
+        min=$(echo "$temps" | sort -n | head -1)
+        max=$(echo "$temps" | sort -n | tail -1)
+        echo "${min}|${max}"
     fi
-
-    # Get temps for this drive within the time window
-    local temps=$(awk -F'|' -v d="$drive" -v c="$cutoff" '$1 >= c && $2 == d {print $3}' "$LOG_FILE")
-
-    if [ -z "$temps" ]; then
-        echo "N/A|N/A"
-        return
-    fi
-
-    # Calculate min and max
-    local min=$(echo "$temps" | sort -n | head -1)
-    local max=$(echo "$temps" | sort -n | tail -1)
-
-    echo "${min}|${max}"
 }
 
 # Function to clean old log entries (older than configured time window)
 clean_old_logs() {
-    if [ ! -f "$LOG_FILE" ]; then
-        return
-    fi
-
     local cutoff=$(($(date +%s) - (STATS_TIME_WINDOW * 3600)))  # Convert hours to seconds
-    local temp_file=$(mktemp)
-
-    # Keep only entries within the time window
-    awk -F'|' -v c="$cutoff" '$1 >= c' "$LOG_FILE" > "$temp_file"
     
-    # Only update the log file if the temp file was created successfully
-    if [ -s "$temp_file" ]; then
-        mv "$temp_file" "$LOG_FILE"
+    if [ "$USE_MEMORY_TRACKING" = "true" ]; then
+        # Clean old entries from memory
+        for key in "${!MEMORY_LOG[@]}"; do
+            local entry="${MEMORY_LOG[$key]}"
+            local timestamp
+            timestamp=$(echo "$entry" | cut -d'|' -f1)
+            
+            if [ "$timestamp" -lt "$cutoff" ]; then
+                unset MEMORY_LOG["$key"]
+            fi
+        done
     else
-        # If temp file is empty but log file exists, it means all entries are old
-        # Keep the file but make it empty
-        if [ -f "$LOG_FILE" ]; then
-            > "$LOG_FILE"
+        # Clean old entries from file
+        if [ ! -f "$LOG_FILE" ]; then
+            return
         fi
-        rm -f "$temp_file"
+
+        local temp_file=$(mktemp)
+
+        # Keep only entries within the time window
+        awk -F'|' -v c="$cutoff" '$1 >= c' "$LOG_FILE" > "$temp_file"
+        
+        # Only update the log file if the temp file was created successfully
+        if [ -s "$temp_file" ]; then
+            mv "$temp_file" "$LOG_FILE"
+        else
+            # If temp file is empty but log file exists, it means all entries are old
+            # Keep the file but make it empty
+            if [ -f "$LOG_FILE" ]; then
+                > "$LOG_FILE"
+            fi
+            rm -f "$temp_file"
+        fi
     fi
 }
 
@@ -346,7 +410,11 @@ while true; do
     echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${PURPLE_BG} ${BOLD}${YELLOW}${TITLE}${PADDING} ${RESET}${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}"
 
     # Refresh info line with time window
-    REFRESH_TEXT="Refreshing every ${REFRESH_INTERVAL}s - Stats Window: ${STATS_TIME_WINDOW}h - Press Ctrl+C to exit"
+    if [ "$USE_MEMORY_TRACKING" = "true" ]; then
+        REFRESH_TEXT="Refreshing every ${REFRESH_INTERVAL}s - Stats Window: ${STATS_TIME_WINDOW}h (In-Memory) - Press Ctrl+C to exit"
+    else
+        REFRESH_TEXT="Refreshing every ${REFRESH_INTERVAL}s - Stats Window: ${STATS_TIME_WINDOW}h - Press Ctrl+C to exit"
+    fi
     REFRESH_LEN=${#REFRESH_TEXT}
     REFRESH_PAD=$((TERM_WIDTH - REFRESH_LEN - 4))
     if [ $REFRESH_PAD -lt 0 ]; then REFRESH_PAD=0; fi
