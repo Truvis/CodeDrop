@@ -403,7 +403,7 @@ while true; do
     fi
 
     # Print header row with proper alignment and dark blue background (without background on borders)
-    printf "${LIGHTBLUE}║${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-8s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} %s${BOLD}${CYAN}%s${RESET}${DARKBLUE_BG}%s   ${LIGHTBLUE}  [${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-23s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG}  ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-24s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-${AVAILABLE_MODEL_WIDTH}s ${RESET}${DARKBLUE_BG}${LIGHTBLUE}]${RESET}${DARKBLUE_BG}           ${RESET}${LIGHTBLUE}║${RESET}\n" \
+    printf "${LIGHTBLUE}║${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-8s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} %s${BOLD}${CYAN}%s${RESET}${DARKBLUE_BG}%s ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-23s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG}  ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-24s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-${AVAILABLE_MODEL_WIDTH}s ${RESET}${DARKBLUE_BG}${LIGHTBLUE}]${RESET}${DARKBLUE_BG}               ${RESET}${LIGHTBLUE}║${RESET}\n" \
         "$HEADER_DRIVE" "$GRAPH_LEFT_PAD" "$HEADER_GRAPH" "$GRAPH_RIGHT_PAD" "$HEADER_24H" "$HEADER_SERIAL" "$HEADER_MODEL"
 
     # Separator line with dashes
@@ -504,7 +504,7 @@ while true; do
             log_temperature "$drive" "$temp"
 
             # Build the line with bar and temperature (24h stats before serial)
-            printf "${LIGHTBLUE}║${RESET} ${LIGHTBLUE}[${RESET} ${BOLD}${WHITE}%-8s${RESET} ${LIGHTBLUE}]${RESET} %s       ${LIGHTBLUE}[${RESET} " "$drive" "$bar"
+            printf "${LIGHTBLUE}║${RESET} ${LIGHTBLUE}[${RESET} ${BOLD}${WHITE}%-8s${RESET} ${LIGHTBLUE}]${RESET} %s  ${LIGHTBLUE}[${RESET} " "$drive" "$bar"
             echo -ne "$stats_display"
             printf "${LIGHTBLUE}]${RESET}  ${LIGHTBLUE}[${RESET} ${WHITE}%-24s${RESET} ${LIGHTBLUE}]${RESET} ${LIGHTBLUE}[${RESET} ${WHITE}%-${AVAILABLE_MODEL_WIDTH}s ${RESET}${LIGHTBLUE}]${RESET}\n" \
                 "$serial" "$model_display"
@@ -515,13 +515,13 @@ while true; do
             for ((i=0; i<38; i++)); do
                 no_temp_bar+="\033[48;5;0m\033[38;5;240m■\033[0m"
             done
-            # Add extra spacing after N/A to match temperature display width (14 chars visible)
-            no_temp_bar+="\033[0m｣ \033[38;5;240mN/A\033[0m           "
+            # Add spacing after N/A to match temperature display width (13 chars total: N/A + 10 spaces)
+            no_temp_bar+="\033[0m｣ \033[38;5;240mN/A\033[0m          "
 
-            # Match the format of temperature-enabled drives (6 spaces before 24h bracket)
+            # Match the format of temperature-enabled drives (2 spaces before 24h bracket)
             printf "${LIGHTBLUE}║${RESET} ${LIGHTBLUE}[${RESET} ${BOLD}${WHITE}%-8s${RESET} ${LIGHTBLUE}]${RESET} " "$drive"
             echo -ne "$no_temp_bar"
-            printf "      ${LIGHTBLUE}[${RESET} %-23s ${LIGHTBLUE}]${RESET}  ${LIGHTBLUE}[${RESET} ${WHITE}%-24s${RESET} ${LIGHTBLUE}]${RESET} ${LIGHTBLUE}[${RESET} ${WHITE}%-${AVAILABLE_MODEL_WIDTH}s ${RESET}${LIGHTBLUE}]${RESET}\n" \
+            printf "  ${LIGHTBLUE}[${RESET} %-23s ${LIGHTBLUE}]${RESET}  ${LIGHTBLUE}[${RESET} ${WHITE}%-24s${RESET} ${LIGHTBLUE}]${RESET} ${LIGHTBLUE}[${RESET} ${WHITE}%-${AVAILABLE_MODEL_WIDTH}s ${RESET}${LIGHTBLUE}]${RESET}\n" \
                 "N/A" "$serial" "$model_display"
         fi
     done
