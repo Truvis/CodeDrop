@@ -262,6 +262,7 @@ WHITE="\033[38;5;15m"
 BLACK="\033[38;5;16m"
 DARKBLUE_BG="\033[48;5;17m"
 PURPLE_BG="\033[48;5;54m"
+TEMPINFO_BG="\033[48;5;240m"
 YELLOW_BG="\033[48;5;220m"
 
 # In-memory tracking storage (associative array)
@@ -421,40 +422,38 @@ while true; do
     REFRESH_PADDING=$(printf ' %.0s' $(seq 1 $REFRESH_PAD))
     echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${PURPLE_BG} ${WHITE}${REFRESH_TEXT}${RESET}${PURPLE_BG}${REFRESH_PADDING} ${RESET}${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}"
 
-    # Blank line
-    BLANK_PAD=$((TERM_WIDTH - 4))
-    if [ $BLANK_PAD -lt 0 ]; then BLANK_PAD=0; fi
-    BLANK_PADDING=$(printf ' %.0s' $(seq 1 $BLANK_PAD))
-    echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${PURPLE_BG} ${BLANK_PADDING} ${RESET}${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}"
+    # Separator line after refresh info
+    echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}╠${BORDER_LINE}╣${RESET}"
 
     # Temperature range info based on color mapping (bars start at 28°C)
-    INFO1="• Cool: ≤28°C (≤82°F) - Light Blue (1 block)"
+    # Note: Emoji is counted as ~4 bytes but displays as 2 columns, so we need to subtract 3
+    INFO1="🌡️ Cool: ≤28°C (≤82°F) - Light Blue (1 block)"
     INFO1_LEN=${#INFO1}
-    INFO1_PAD=$((TERM_WIDTH - INFO1_LEN - 4))
+    INFO1_PAD=$((TERM_WIDTH - INFO1_LEN - 3))  # -3 to compensate for emoji display width difference
     if [ $INFO1_PAD -lt 0 ]; then INFO1_PAD=0; fi
     INFO1_PADDING=$(printf ' %.0s' $(seq 1 $INFO1_PAD))
-    echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${PURPLE_BG} ${WHITE}${INFO1}${RESET}${PURPLE_BG}${INFO1_PADDING} ${RESET}${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}"
+    echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${TEMPINFO_BG} ${WHITE}${INFO1}${RESET}${TEMPINFO_BG}${INFO1_PADDING} ${RESET}${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}"
 
-    INFO2="• Optimal: 29°C to 45°C (84°F to 113°F) - Green to Yellow"
+    INFO2="🌡️ Optimal: 29°C to 45°C (84°F to 113°F) - Green to Yellow"
     INFO2_LEN=${#INFO2}
-    INFO2_PAD=$((TERM_WIDTH - INFO2_LEN - 4))
+    INFO2_PAD=$((TERM_WIDTH - INFO2_LEN - 3))
     if [ $INFO2_PAD -lt 0 ]; then INFO2_PAD=0; fi
     INFO2_PADDING=$(printf ' %.0s' $(seq 1 $INFO2_PAD))
-    echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${PURPLE_BG} ${WHITE}${INFO2}${RESET}${PURPLE_BG}${INFO2_PADDING} ${RESET}${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}"
+    echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${TEMPINFO_BG} ${WHITE}${INFO2}${RESET}${TEMPINFO_BG}${INFO2_PADDING} ${RESET}${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}"
 
-    INFO3="• Warm: 46°C to 55°C (115°F to 131°F) - Orange to Brown/Red"
+    INFO3="🌡️ Warm: 46°C to 55°C (115°F to 131°F) - Orange to Brown/Red"
     INFO3_LEN=${#INFO3}
-    INFO3_PAD=$((TERM_WIDTH - INFO3_LEN - 4))
+    INFO3_PAD=$((TERM_WIDTH - INFO3_LEN - 3))
     if [ $INFO3_PAD -lt 0 ]; then INFO3_PAD=0; fi
     INFO3_PADDING=$(printf ' %.0s' $(seq 1 $INFO3_PAD))
-    echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${PURPLE_BG} ${WHITE}${INFO3}${RESET}${PURPLE_BG}${INFO3_PADDING} ${RESET}${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}"
+    echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${TEMPINFO_BG} ${WHITE}${INFO3}${RESET}${TEMPINFO_BG}${INFO3_PADDING} ${RESET}${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}"
 
-    INFO4="• Critical: 56°C to 65°C (133°F to 149°F) - Red to Bright Magenta"
+    INFO4="🌡️ Critical: 56°C to 65°C (133°F to 149°F) - Red to Bright Magenta"
     INFO4_LEN=${#INFO4}
-    INFO4_PAD=$((TERM_WIDTH - INFO4_LEN - 4))
+    INFO4_PAD=$((TERM_WIDTH - INFO4_LEN - 3))
     if [ $INFO4_PAD -lt 0 ]; then INFO4_PAD=0; fi
     INFO4_PADDING=$(printf ' %.0s' $(seq 1 $INFO4_PAD))
-    echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${PURPLE_BG} ${WHITE}${INFO4}${RESET}${PURPLE_BG}${INFO4_PADDING} ${RESET}${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}"
+    echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}${TEMPINFO_BG} ${WHITE}${INFO4}${RESET}${TEMPINFO_BG}${INFO4_PADDING} ${RESET}${PURPLE_BG}${BOLD}${LIGHTBLUE}║${RESET}"
 
     echo -e "${PURPLE_BG}${BOLD}${LIGHTBLUE}╚${BORDER_LINE}╝${RESET}"
 
@@ -508,7 +507,7 @@ while true; do
     
     # Calculate remaining space for MODEL column
     FIXED_WIDTHS=$((DRIVE_WIDTH + TEMP_BAR_WIDTH + STATS_WIDTH + SERIAL_WIDTH + 12))  # 12 for spacing
-    MODEL_WIDTH=$((TERM_WIDTH - FIXED_WIDTHS))
+    MODEL_WIDTH=$((TERM_WIDTH - FIXED_WIDTHS + 3))  # +3 to bring closing bracket closer (reduced by 2)
     
     # Ensure minimum widths
     if [ $MODEL_WIDTH -lt 20 ]; then
@@ -549,23 +548,23 @@ while true; do
 
     # Calculate model padding
     MODEL_HEADER_LEN=${#HEADER_MODEL}
-    MODEL_PAD_NEEDED=$((MODEL_WIDTH - MODEL_HEADER_LEN - 4))
+    MODEL_PAD_NEEDED=$((MODEL_WIDTH - MODEL_HEADER_LEN - 5))  # -5 for brackets, spaces
     if [ $MODEL_PAD_NEEDED -lt 0 ]; then MODEL_PAD_NEEDED=0; fi
 
-    # Print header row without ║ borders, with dark blue background
-    printf "${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-8s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} %s${BOLD}${CYAN}%s${RESET}${DARKBLUE_BG}%s ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%s%-${STATS_PAD_NEEDED}s${RESET}${DARKBLUE_BG}${LIGHTBLUE}]${RESET}${DARKBLUE_BG}  ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%s%-${SERIAL_PAD_NEEDED}s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%s%-${MODEL_PAD_NEEDED}s ${RESET}${DARKBLUE_BG}${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${RESET}\n" \
+    # Print header row with left ║ border, with dark blue background
+    printf "${LIGHTBLUE}║${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%-8s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} %s${BOLD}${CYAN}%s${RESET}${DARKBLUE_BG}%s ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%s%-${STATS_PAD_NEEDED}s${RESET}${DARKBLUE_BG}${LIGHTBLUE}]${RESET}${DARKBLUE_BG}  ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%s%-${SERIAL_PAD_NEEDED}s${RESET}${DARKBLUE_BG} ${LIGHTBLUE}]${RESET}${DARKBLUE_BG} ${LIGHTBLUE}[${RESET}${DARKBLUE_BG} ${BOLD}${CYAN}%s%-${MODEL_PAD_NEEDED}s${RESET}${DARKBLUE_BG}${LIGHTBLUE}]${RESET}\n" \
         "$HEADER_DRIVE" "$GRAPH_LEFT_PAD" "$HEADER_GRAPH" "$GRAPH_RIGHT_PAD" "$HEADER_STATS" "" "$HEADER_SERIAL" "" "$HEADER_MODEL" ""
 
-    # Separator line with dashes (no side borders)
-    SEP_WIDTH=$((TERM_WIDTH - 2))
+    # Separator line with dashes (with left border)
+    SEP_WIDTH=$((TERM_WIDTH - 4))
     SEPARATOR=$(printf -- '-%.0s' $(seq 1 $SEP_WIDTH))
-    printf " ${GRAY}${SEPARATOR}${RESET}\n"
+    printf "${LIGHTBLUE}║${RESET} ${GRAY}${SEPARATOR}${RESET} ${LIGHTBLUE}║${RESET}\n"
 
     # Get all block devices (excluding loop, ram, etc.)
     drives=$(lsblk -ndo NAME,TYPE | grep disk | awk '{print $1}')
 
     if [ -z "$drives" ]; then
-        echo " ${WHITE}No drives found${RESET}"
+        echo -e "${LIGHTBLUE}║${RESET} ${WHITE}No drives found${RESET}"
         # Drive monitoring section border (bottom)
         echo -e "${BOLD}${LIGHTBLUE}╚${BORDER_LINE}╝${RESET}"
         echo ""
@@ -666,10 +665,10 @@ while true; do
             # Log the temperature
             log_temperature "$drive" "$temp"
 
-            # Build the line with bar and temperature (no side borders)
-            printf " ${LIGHTBLUE}[${RESET} ${BOLD}${WHITE}%-8s${RESET} ${LIGHTBLUE}]${RESET} %s  ${LIGHTBLUE}[${RESET} " "$drive" "$bar"
+            # Build the line with bar and temperature (with left border)
+            printf "${LIGHTBLUE}║${RESET} ${LIGHTBLUE}[${RESET} ${BOLD}${WHITE}%-8s${RESET} ${LIGHTBLUE}]${RESET} %s  ${LIGHTBLUE}[${RESET} " "$drive" "$bar"
             echo -ne "$stats_display"
-            printf "%-${stats_pad}s${LIGHTBLUE}]${RESET}  ${LIGHTBLUE}[${RESET} ${WHITE}%-${serial_display_width}s${RESET} ${LIGHTBLUE}]${RESET} ${LIGHTBLUE}[${RESET} ${WHITE}%-${model_display_width}s ${RESET}${LIGHTBLUE}]${RESET}\n" \
+            printf "%-${stats_pad}s${LIGHTBLUE}]${RESET}  ${LIGHTBLUE}[${RESET} ${WHITE}%-${serial_display_width}s${RESET} ${LIGHTBLUE}]${RESET} ${LIGHTBLUE}[${RESET} ${WHITE}%-${model_display_width}s ${RESET}${LIGHTBLUE}]${RESET}${LIGHTBLUE}║${RESET}\n" \
                 "" "$serial" "$model_display"
         else
             # Skip this drive if HIDE_NA_DRIVES is enabled
@@ -684,9 +683,9 @@ while true; do
             done
             no_temp_bar+="\033[0m｣ \033[38;5;240mN/A\033[0m          "
 
-            printf " ${LIGHTBLUE}[${RESET} ${BOLD}${WHITE}%-8s${RESET} ${LIGHTBLUE}]${RESET} " "$drive"
+            printf "${LIGHTBLUE}║${RESET} ${LIGHTBLUE}[${RESET} ${BOLD}${WHITE}%-8s${RESET} ${LIGHTBLUE}]${RESET} " "$drive"
             echo -ne "$no_temp_bar"
-            printf "  ${LIGHTBLUE}[${RESET} %-3s%-${stats_pad}s${LIGHTBLUE}]${RESET}  ${LIGHTBLUE}[${RESET} ${WHITE}%-${serial_display_width}s${RESET} ${LIGHTBLUE}]${RESET} ${LIGHTBLUE}[${RESET} ${WHITE}%-${model_display_width}s ${RESET}${LIGHTBLUE}]${RESET}\n" \
+            printf "  ${LIGHTBLUE}[${RESET} %-3s%-${stats_pad}s${LIGHTBLUE}]${RESET}  ${LIGHTBLUE}[${RESET} ${WHITE}%-${serial_display_width}s${RESET} ${LIGHTBLUE}]${RESET} ${LIGHTBLUE}[${RESET} ${WHITE}%-${model_display_width}s ${RESET}${LIGHTBLUE}]${RESET}${LIGHTBLUE}║${RESET}\n" \
                 "N/A" "" "$serial" "$model_display"
         fi
     done
