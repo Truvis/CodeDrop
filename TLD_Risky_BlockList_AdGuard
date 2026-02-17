@@ -1,11 +1,14 @@
 [Adblock Plus]
-! Title: Research-Backed Abusive TLD Blocklist
-! Description: Blocks the most dangerous top-level domains based on evidence from
-!   Spamhaus, Interisle Consulting, APWG, Cloudflare, Palo Alto Unit 42,
-!   DomainTools, ICANN DAAR, Netcraft, and academic research (2021-2025).
+! Title: Research-Backed Abusive TLD Blocklist — Comprehensive Edition
+| Truvis Thornton <truvis.thornton@truv.is>
+! Description: Blocks 280+ dangerous top-level domains based on evidence from
+!   Spamhaus, Interisle Consulting, APWG, Cloudflare Radar, Palo Alto Unit 42,
+!   DomainTools, ICANN DAAR, Netcraft, HaGeZi DNS Blocklists, and academic
+!   research (2021-2025). Cross-referenced against the HaGeZi "Most Abused TLDs"
+!   community blocklist (19K+ GitHub stars).
 ! Last modified: 17 Feb 2026
 ! Expires: 7 days
-! Version: 1.0.0
+! Version: 2.0.0
 !
 ! WHITELISTING: To allow a specific domain under a blocked TLD:
 !   @@||my-legitimate-site.xyz^
@@ -14,6 +17,7 @@
 !
 ! ========================================================================
 ! TIER 1 — CRITICAL RISK: Consensus across 3+ major research sources
+! Sources: Spamhaus, Interisle, APWG, Cloudflare, Unit 42, DomainTools
 ! ========================================================================
 !
 ! .top — 187K phishing domains/yr; 97% unwanted email; ICANN breach letter Jul 2024
@@ -38,6 +42,16 @@
 ||*.icu^
 ! .monster — 96% spam+malicious email (Cloudflare); phishing score 144.5
 ||*.monster^
+! .online — 33,414 phishing domains; Interisle top 20 all 5 years; Spamhaus top 20
+||*.online^
+! .site — 20,595 phishing domains; >80% maliciously registered; Spamhaus top 20
+||*.site^
+! .store — Fake e-commerce vector; 37.5% of zone newly observed (Spamhaus 2025)
+||*.store^
+! .pro — +272% YoY phishing growth; Spamhaus #5 gTLD; 73% spam+malicious email
+||*.pro^
+! .bar — >99% spam/malicious email (Cloudflare 2024); #2 phishing score 2021-2022
+||*.bar^
 !
 ! ========================================================================
 ! TIER 2 — HIGH RISK: Documented by 2+ authoritative sources
@@ -81,12 +95,44 @@
 ||*.live^
 ! .vip — Interisle cybercrime top 10; >10% domains reported for cybercrime
 ||*.vip^
+! .space — HaGeZi blocked; 40% spam+malicious email (Cloudflare)
+||*.space^
+! .biz — Legacy gTLD with persistent abuse; Unit 42; 24% spam+malicious email
+||*.biz^
+! .mobi — New #4 gTLD in Spamhaus Apr-Sep 2025; sudden criminal exploitation spike
+||*.mobi^
+! .website — Consistent abuse; HaGeZi blocked with 8 exclusions
+||*.website^
+! .life — New Spamhaus top 20; Vextrio TDS campaign 100K malicious domains
+||*.life^
+! .blog — New #19 in Spamhaus gTLD detections; emerging abuse vector
+||*.blog^
+! .pics — Phishing score 303.9 per 10K; operated by XYZ.COM LLC
+||*.pics^
+! .pink — Highest yearly cybercrime scores alongside .bond/.xin (Interisle 2025)
+||*.pink^
+! .directory — >95% spam (Cloudflare Feb 2024); BinkyMoon registry
+||*.directory^
+! .motorcycles — 94.7% malicious+spam — highest single TLD (Cloudflare Oct 2025)
+||*.motorcycles^
+! .christmas — 99.8% spam+malicious email (Cloudflare 2025 Year in Review)
+||*.christmas^
+! .mov — Mimics video file extension; auto-linkified in apps; phishing vector
+||*.mov^
+! .degree — Spamhaus badness index 2.77 (highest 2023); near-zero legitimate use
+||*.degree^
+! .company — 96% spam email (Cloudflare Jan 2024); minimal legitimate use
+||*.company^
+! .ooo — Top 5 worst cybercrime score of any TLD (Interisle 2024)
+||*.ooo^
+! .gdn — Described as most abused TLD extension; Spamhaus historical worst
+||*.gdn^
 !
 ! ========================================================================
 ! TIER 3 — ELEVATED RISK: High proportional abuse (Spamhaus/Interisle)
 ! ========================================================================
 !
-! .qpon — 71.12% malicious (Spamhaus Oct 2024–Mar 2025)
+! .qpon — 71.12% malicious (Spamhaus Oct 2024-Mar 2025)
 ||*.qpon^
 ! .locker — 68.42% malicious (Spamhaus 2025); 84% numeric/automated domains
 ||*.locker^
@@ -125,69 +171,62 @@
 ! TIER 4 — HISTORICALLY ABUSED: "Infamous Eight" era (2017-2019 Spamhaus)
 ! ========================================================================
 !
-! .stream — Spamhaus worst TLD lists 2017-2019; spam/malware
 ||*.stream^
-! .racing — Spamhaus worst TLD lists 2017-2019
 ||*.racing^
-! .cricket — Spamhaus worst TLD lists 2017-2019
 ||*.cricket^
-! .science — Spamhaus worst TLD lists 2017-2019; still in HaGeZi blocklist
 ||*.science^
-! .party — Spamhaus worst TLD lists 2017-2019
 ||*.party^
-! .date — Spamhaus worst TLD lists 2017-2019
 ||*.date^
-! .review — Spamhaus worst TLD lists 2017-2019
 ||*.review^
-! .trade — Spamhaus worst TLD lists 2017-2019
 ||*.trade^
-! .accountant — Spamhaus worst TLD lists 2017-2019
 ||*.accountant^
-! .download — Spamhaus worst TLD lists 2017-2019; spam/malware
 ||*.download^
-! .win — Resurgent: phishing score 796.1 (Interisle 2025); Spamhaus 2017-2019
+! .win — Resurgent: phishing score 796.1 (Interisle 2025)
 ||*.win^
-! .faith — Spamhaus worst TLD lists 2017-2019
 ||*.faith^
-! .men — Spamhaus worst TLD lists 2017-2019; covered by Krebs on Security
 ||*.men^
 !
 ! ========================================================================
-! TIER 5 — FORMER FREENOM ccTLDs: Were 14% of global phishing (APWG);
-!   Freenom exited Feb 2024 after Meta lawsuit. Mostly defunct but
-!   blocking provides residual protection.
+! TIER 5 — FORMER FREENOM ccTLDs: Were 14% of global phishing;
+!   Freenom exited Feb 2024 after Meta lawsuit. Mostly defunct.
 ! ========================================================================
 !
-! .tk — Tokelau; was #2 most-phished TLD globally (Interisle 2021)
 ||*.tk^
-! .ml — Mali; was #3 most-phished TLD (Interisle 2023)
 ||*.ml^
-! .ga — Gabon; was #5 most-phished TLD; top for malware (Unit 42)
 ||*.ga^
-! .cf — Central African Republic; high malware and C2 abuse (Unit 42)
 ||*.cf^
-! .gq — Equatorial Guinea; high C2 and proxy abuse (Unit 42)
 ||*.gq^
 !
 ! ========================================================================
-! TIER 6 — HIGH-RISK ccTLDs: Disproportionate abuse relative to use
+! TIER 6 — HIGH-RISK ccTLDs
 ! ========================================================================
 !
-! .pw — Palau; 7+ std deviations above avg phishing rate (Unit 42)
+! .pw — 7+ std deviations above avg phishing rate (Unit 42)
 ||*.pw^
-! .cc — Cocos Islands; Interisle top-10 malicious registrations; APWG top 4
+! .cc — Interisle top-10 malicious registrations; APWG top 4
 ||*.cc^
-!
-! ========================================================================
-! TIER 7 — ADDITIONAL FLAGGED TLDs: At least one authoritative source
-! ========================================================================
-!
 ! .info — Interisle top 20 all 5 years; 79% maliciously registered phishing
 ||*.info^
 ! .cn — China ccTLD; multiple top-20 lists (Interisle, Spamhaus)
 ||*.cn^
 ! .ru — Russia ccTLD; consistent presence in abuse lists (Interisle)
 ||*.ru^
+! .su — Soviet Union; botnet C2 haven; Aisuru botnet 100+ C2 servers (Krebs 2025)
+||*.su^
+! .cm — #1 dangerous ccTLD (McAfee); typosquatting on .com; 36.7% malicious
+||*.cm^
+! .ws — Samoa; 95% malicious email (Cloudflare Jan 2024); #3 dangerous (McAfee)
+||*.ws^
+! .sx — Sint Maarten; 1K-10K spam records (Interisle); no WHOIS transparency
+||*.sx^
+! .ng — Nigeria; HaGeZi blocked (1 exclusion); pervasive abuse
+||*.ng^
+! .st — São Tomé; 1K-10K spam records (Interisle); cheap open registration
+||*.st^
+! .lc — Saint Lucia; 1K-10K spam records (Interisle); disproportionate to size
+||*.lc^
+! .zw — Zimbabwe; 85% malicious email (Cloudflare); 7σ above average (Unit 42)
+||*.zw^
 ! .autos — #1 spam TLD by category (Cloudflare 2023)
 ||*.autos^
 ! .surf — Spamhaus worst list
@@ -196,15 +235,256 @@
 ||*.lgbt^
 !
 ! ========================================================================
-! END OF BLOCKLIST — 65 TLDs blocked
+! TIER 7 — HaGeZi BLOCKED TLDs: Zero exclusions (near-zero legitimate use)
+! Source: HaGeZi dns-blocklists "Most Abused TLDs" (Spamhaus, Cloudflare
+!   Radar, Netcraft, Yokoffing, DandelionSprout aggregated feeds)
+! ========================================================================
+!
+||*.actor^
+||*.apartments^
+||*.auction^
+||*.baby^
+||*.beer^
+||*.bet^
+||*.bingo^
+||*.black^
+||*.blue^
+||*.boats^
+||*.boston^
+||*.boutique^
+||*.builders^
+||*.business^
+||*.casino^
+||*.ceo^
+||*.channel^
+||*.charity^
+||*.cheap^
+||*.claims^
+||*.clothing^
+||*.college^
+||*.consulting^
+||*.coupons^
+||*.courses^
+||*.credit^
+||*.dance^
+||*.day^
+||*.dental^
+||*.diy^
+||*.engineer^
+||*.enterprises^
+||*.exposed^
+||*.family^
+||*.fashion^
+||*.financial^
+||*.fishing^
+||*.florist^
+||*.forex^
+||*.forsale^
+||*.fund^
+||*.futbol^
+||*.gives^
+||*.giving^
+||*.golf^
+||*.gratis^
+||*.haus^
+||*.hot^
+||*.international^
+||*.irish^
+||*.jewelry^
+||*.joburg^
+||*.kim^
+||*.lat^
+||*.lifestyle^
+||*.llp^
+||*.loans^
+||*.london^
+||*.love^
+||*.luxe^
+||*.management^
+||*.markets^
+||*.mba^
+||*.miami^
+||*.moda^
+||*.navy^
+||*.observer^
+||*.okinawa^
+||*.ong^
+||*.parts^
+||*.pharmacy^
+||*.place^
+||*.promo^
+||*.realtor^
+||*.realty^
+||*.recipes^
+||*.rehab^
+||*.ren^
+||*.repair^
+||*.reviews^
+||*.rich^
+||*.rodeo^
+||*.ryukyu^
+||*.sale^
+||*.schule^
+||*.sew^
+||*.shopping^
+||*.soy^
+||*.srl^
+||*.sydney^
+||*.tattoo^
+||*.tax^
+||*.taxi^
+||*.tel^
+||*.tennis^
+||*.tienda^
+||*.tires^
+||*.trading^
+||*.vacations^
+||*.vegas^
+||*.ventures^
+||*.vin^
+||*.vision^
+||*.vlaanderen^
+||*.voto^
+||*.webcam^
+||*.wedding^
+||*.yoga^
+||*.you^
+!
+! ========================================================================
+! TIER 8 — HaGeZi BLOCKED TLDs: Few exclusions (1-5 legitimate domains)
+! These have minimal legitimate use. Whitelist specific domains as needed.
+! ========================================================================
+!
+||*.africa^
+||*.army^
+||*.band^
+||*.boo^
+||*.capital^
+||*.careers^
+||*.casa^
+||*.cash^
+||*.deals^
+||*.desi^
+||*.discount^
+||*.eco^
+||*.equipment^
+||*.events^
+||*.exchange^
+||*.foo^
+||*.gent^
+||*.gift^
+||*.glass^
+||*.gold^
+||*.green^
+||*.health^
+||*.healthcare^
+||*.homes^
+||*.how^
+||*.llc^
+||*.menu^
+||*.onl^
+||*.pet^
+||*.phd^
+||*.post^
+||*.prof^
+||*.rent^
+||*.sport^
+||*.vote^
+||*.wine^
+||*.yachts^
+!
+! ========================================================================
+! TIER 9 — HaGeZi BLOCKED TLDs: Moderate exclusions (3-15 legitimate domains)
+! Higher chance of false positives. Monitor logs and whitelist as needed.
+! ========================================================================
+!
+||*.agency^
+||*.asia^
+||*.bike^
+||*.center^
+||*.church^
+||*.city^
+||*.computer^
+||*.cool^
+||*.dad^
+||*.dating^
+||*.delivery^
+||*.dog^
+||*.expert^
+||*.fan^
+||*.fit^
+||*.fitness^
+||*.foundation^
+||*.games^
+||*.guide^
+||*.guru^
+||*.house^
+||*.legal^
+||*.ltd^
+||*.market^
+||*.moe^
+||*.money^
+||*.name^
+||*.ninja^
+||*.photo^
+||*.photos^
+||*.plus^
+||*.pub^
+||*.quest^
+||*.red^
+||*.restaurant^
+||*.rip^
+||*.sexy^
+||*.show^
+||*.solar^
+||*.style^
+||*.studio^
+||*.tokyo^
+||*.tube^
+||*.wtf^
+||*.new^
+!
+! ========================================================================
+! TIER 10 — ABUSED SUBDOMAIN ZONES: Free subdomain services exploited
+!   identically to free TLD registrations for phishing/malware
+! Source: HaGeZi dns-blocklists
+! ========================================================================
+!
+||*.us.kg^
+||*.xx.kg^
+||*.sa.com^
+||*.za.com^
+||*.edu.eu^
+||*.dpdns.org^
+||*.qzz.io^
+!
+! ========================================================================
+! END OF BLOCKLIST — 280+ TLDs and 7 subdomain zones blocked
 !
 ! SOURCES:
-! [1] Spamhaus Domain Reputation Updates (2024-2025)
-! [2] Interisle Consulting, Phishing Landscape 2025
-! [3] Cloudflare, "Evolving Threat Landscape of Unwanted Email" (2024)
-! [4] APWG Phishing Activity Trends Reports Q4 2024, Q1-Q2 2025
-! [5] Palo Alto Unit 42, "TLDs and Cybercrime" (2021)
-! [6] DomainTools, "Names and Shames" Report (2022)
-! [7] ICANN DAAR Monthly Reports (2017-2024)
-! [8] HaGeZi DNS Blocklists (github.com/hagezi/dns-blocklists)
+! [1]  Spamhaus Domain Reputation Updates (2024-2025)
+! [2]  Interisle Consulting, Phishing Landscape 2025
+! [3]  Interisle Consulting, Cybercrime Supply Chain 2025
+! [4]  Cloudflare, "Evolving Threat Landscape of Unwanted Email" (2024)
+! [5]  Cloudflare Radar 2025 Year in Review
+! [6]  APWG Phishing Activity Trends Reports Q4 2024, Q1-Q2 2025
+! [7]  Palo Alto Unit 42, "TLDs and Cybercrime" (2021)
+! [8]  Palo Alto Unit 42, "TLD Tracker" (2024)
+! [9]  DomainTools, "Names and Shames" Report (2022)
+! [10] ICANN DAAR / Domain Metrica (2017-2025)
+! [11] HaGeZi dns-blocklists v2025.1204 (github.com/hagezi/dns-blocklists)
+! [12] McAfee "Most Dangerous TLDs" ccTLD Rankings
+! [13] Krebs on Security — Aisuru botnet / .su C2 (Nov 2025)
+! [14] Netcraft Cybercrime TLD Rankings
+! [15] Forescout, "Domain Security in 2025"
+! [16] CAIDA, "Analyzing DNS Abuse for Phishing Attacks" (2025)
+!
+! COMPANION LIST (actively maintained, auto-updated):
+!   HaGeZi Spam TLDs for AdGuard:
+!   https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/spam-tlds.txt
+!
+! WARNING: This is an aggressive blocklist. Tiers 1-6 are high-confidence
+! blocks with minimal false positives. Tiers 7-8 block TLDs with near-zero
+! legitimate use. Tier 9 may require whitelisting specific domains.
+! Monitor your AdGuard query log after deployment.
 ! ========================================================================
