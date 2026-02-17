@@ -1,0 +1,210 @@
+[Adblock Plus]
+! Title: Research-Backed Abusive TLD Blocklist
+! Description: Blocks the most dangerous top-level domains based on evidence from
+!   Spamhaus, Interisle Consulting, APWG, Cloudflare, Palo Alto Unit 42,
+!   DomainTools, ICANN DAAR, Netcraft, and academic research (2021-2025).
+! Last modified: 17 Feb 2026
+! Expires: 7 days
+! Version: 1.0.0
+!
+! WHITELISTING: To allow a specific domain under a blocked TLD:
+!   @@||my-legitimate-site.xyz^
+! Or use denyallow on the TLD rule itself:
+!   ||*.xyz^$denyallow=legitimate1.xyz|legitimate2.xyz
+!
+! ========================================================================
+! TIER 1 — CRITICAL RISK: Consensus across 3+ major research sources
+! ========================================================================
+!
+! .top — 187K phishing domains/yr; 97% unwanted email; ICANN breach letter Jul 2024
+||*.top^
+! .xin — Highest phishing score ever: 10,810; 82% malicious (Spamhaus 2025)
+||*.xin^
+! .bond — Phishing score 1,759; 100% maliciously registered (Interisle 2025)
+||*.bond^
+! .xyz — 73K phishing domains/yr; top 5 all 5 years of Interisle studies
+||*.xyz^
+! .shop — 50K phishing domains/yr; #2 spam email volume (Cloudflare)
+||*.shop^
+! .cfd — Phishing score 748; 96% maliciously registered (Interisle 2025)
+||*.cfd^
+! .sbs — 98% spam+malicious email (Cloudflare); 172% Spamhaus growth
+||*.sbs^
+! .lol — 96% maliciously registered; +2,036% phishing increase (Interisle 2025)
+||*.lol^
+! .cyou — 96% spam+malicious email; 62% malicious (Cloudflare); flagged by APWG
+||*.cyou^
+! .icu — Phishing score 168.6 (Interisle); notable volumes (Unit 42)
+||*.icu^
+! .monster — 96% spam+malicious email (Cloudflare); phishing score 144.5
+||*.monster^
+!
+! ========================================================================
+! TIER 2 — HIGH RISK: Documented by 2+ authoritative sources
+! ========================================================================
+!
+! .beauty — 97% spam+malicious email (Cloudflare 2023)
+||*.beauty^
+! .hair — 97% spam+malicious email (Cloudflare 2023)
+||*.hair^
+! .skin — Part of beauty-industry abuse cluster (Cloudflare 2023)
+||*.skin^
+! .makeup — 95% spam+malicious; 63% malicious (Cloudflare 2023)
+||*.makeup^
+! .uno — 99% spam+malicious — highest combined rate (Cloudflare 2023)
+||*.uno^
+! .best — 97% spam+malicious email (Cloudflare); phishing score 100.1
+||*.best^
+! .wiki — 95% spam+malicious email (Cloudflare 2023)
+||*.wiki^
+! .buzz — Worst phishing TLD (DomainTools 2022); Spamhaus top 20 (2024)
+||*.buzz^
+! .cam — Worst spam TLD (DomainTools 2022); Cloudflare top 50
+||*.cam^
+! .help — Phishing score 1,077.7 — third-highest quarterly (Interisle)
+||*.help^
+! .today — 96% maliciously registered; phishing score 109.2 (Interisle 2025)
+||*.today^
+! .click — Phishing score 110.6 (Interisle); bulk abuse (Spamhaus)
+||*.click^
+! .link — Top-10 across Spamhaus, Netcraft, and PhishTank datasets
+||*.link^
+! .support — Phishing score 225.0 (Interisle); BinkyMoon LLC
+||*.support^
+! .fun — Cloudflare top 50 spam+malicious TLDs
+||*.fun^
+! .ink — Phishing score 128.9 (Interisle)
+||*.ink^
+! .mom — Phishing score 115.8 (Interisle)
+||*.mom^
+! .live — Phishing score 114.3 (Interisle)
+||*.live^
+! .vip — Interisle cybercrime top 10; >10% domains reported for cybercrime
+||*.vip^
+!
+! ========================================================================
+! TIER 3 — ELEVATED RISK: High proportional abuse (Spamhaus/Interisle)
+! ========================================================================
+!
+! .qpon — 71.12% malicious (Spamhaus Oct 2024–Mar 2025)
+||*.qpon^
+! .locker — 68.42% malicious (Spamhaus 2025); 84% numeric/automated domains
+||*.locker^
+! .town — 47.24% malicious (Spamhaus 2025); 4,380% spam domain increase
+||*.town^
+! .pizza — 46.03% malicious (Spamhaus 2025); 74% numeric domains
+||*.pizza^
+! .pictures — 45.47% malicious (Spamhaus 2025); 72% numeric domains
+||*.pictures^
+! .loan — 43.66% malicious (Spamhaus 2025); worst TLD lists since 2017
+||*.loan^
+! .poker — 37.14% malicious (Spamhaus 2025)
+||*.poker^
+! .bid — 35.21% malicious (Spamhaus 2025); Cloudflare top 50
+||*.bid^
+! .finance — Phishing score 313.4 (Interisle); BinkyMoon LLC
+||*.finance^
+! .world — Phishing score 183.1 (Interisle)
+||*.world^
+! .fyi — Phishing score 157.6 (Interisle); BinkyMoon LLC
+||*.fyi^
+! .zone — Phishing score 137.3 (Interisle); BinkyMoon LLC
+||*.zone^
+! .rest — Highest Spamhaus badness score in 2022 (3.99)
+||*.rest^
+! .work — Unit 42 grayware category; high malicious NRD rate
+||*.work^
+! .club — Unit 42 grayware category; elevated abuse rates
+||*.club^
+! .wang — Chinese-market TLD; notable spam abuse (Spamhaus)
+||*.wang^
+! .zip — Resembles file extension; exploited for phishing URLs (Unit 42, 2023)
+||*.zip^
+!
+! ========================================================================
+! TIER 4 — HISTORICALLY ABUSED: "Infamous Eight" era (2017-2019 Spamhaus)
+! ========================================================================
+!
+! .stream — Spamhaus worst TLD lists 2017-2019; spam/malware
+||*.stream^
+! .racing — Spamhaus worst TLD lists 2017-2019
+||*.racing^
+! .cricket — Spamhaus worst TLD lists 2017-2019
+||*.cricket^
+! .science — Spamhaus worst TLD lists 2017-2019; still in HaGeZi blocklist
+||*.science^
+! .party — Spamhaus worst TLD lists 2017-2019
+||*.party^
+! .date — Spamhaus worst TLD lists 2017-2019
+||*.date^
+! .review — Spamhaus worst TLD lists 2017-2019
+||*.review^
+! .trade — Spamhaus worst TLD lists 2017-2019
+||*.trade^
+! .accountant — Spamhaus worst TLD lists 2017-2019
+||*.accountant^
+! .download — Spamhaus worst TLD lists 2017-2019; spam/malware
+||*.download^
+! .win — Resurgent: phishing score 796.1 (Interisle 2025); Spamhaus 2017-2019
+||*.win^
+! .faith — Spamhaus worst TLD lists 2017-2019
+||*.faith^
+! .men — Spamhaus worst TLD lists 2017-2019; covered by Krebs on Security
+||*.men^
+!
+! ========================================================================
+! TIER 5 — FORMER FREENOM ccTLDs: Were 14% of global phishing (APWG);
+!   Freenom exited Feb 2024 after Meta lawsuit. Mostly defunct but
+!   blocking provides residual protection.
+! ========================================================================
+!
+! .tk — Tokelau; was #2 most-phished TLD globally (Interisle 2021)
+||*.tk^
+! .ml — Mali; was #3 most-phished TLD (Interisle 2023)
+||*.ml^
+! .ga — Gabon; was #5 most-phished TLD; top for malware (Unit 42)
+||*.ga^
+! .cf — Central African Republic; high malware and C2 abuse (Unit 42)
+||*.cf^
+! .gq — Equatorial Guinea; high C2 and proxy abuse (Unit 42)
+||*.gq^
+!
+! ========================================================================
+! TIER 6 — HIGH-RISK ccTLDs: Disproportionate abuse relative to use
+! ========================================================================
+!
+! .pw — Palau; 7+ std deviations above avg phishing rate (Unit 42)
+||*.pw^
+! .cc — Cocos Islands; Interisle top-10 malicious registrations; APWG top 4
+||*.cc^
+!
+! ========================================================================
+! TIER 7 — ADDITIONAL FLAGGED TLDs: At least one authoritative source
+! ========================================================================
+!
+! .info — Interisle top 20 all 5 years; 79% maliciously registered phishing
+||*.info^
+! .cn — China ccTLD; multiple top-20 lists (Interisle, Spamhaus)
+||*.cn^
+! .ru — Russia ccTLD; consistent presence in abuse lists (Interisle)
+||*.ru^
+! .autos — #1 spam TLD by category (Cloudflare 2023)
+||*.autos^
+! .surf — Spamhaus worst list
+||*.surf^
+! .lgbt — 54.03% malicious (Spamhaus 2025)
+||*.lgbt^
+!
+! ========================================================================
+! END OF BLOCKLIST — 65 TLDs blocked
+!
+! SOURCES:
+! [1] Spamhaus Domain Reputation Updates (2024-2025)
+! [2] Interisle Consulting, Phishing Landscape 2025
+! [3] Cloudflare, "Evolving Threat Landscape of Unwanted Email" (2024)
+! [4] APWG Phishing Activity Trends Reports Q4 2024, Q1-Q2 2025
+! [5] Palo Alto Unit 42, "TLDs and Cybercrime" (2021)
+! [6] DomainTools, "Names and Shames" Report (2022)
+! [7] ICANN DAAR Monthly Reports (2017-2024)
+! [8] HaGeZi DNS Blocklists (github.com/hagezi/dns-blocklists)
+! ========================================================================
